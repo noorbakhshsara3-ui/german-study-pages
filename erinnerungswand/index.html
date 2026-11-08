@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="fa" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Menschen B1.1 – مجموعه‌ی درس‌ها (۲ تا ۱۲)</title>
+<style>
+:root{--navy:#27344a;--gold:#a98348;--cream:#f6f2ea;--ink:#1f2937}
+*{box-sizing:border-box}html,body{margin:0;height:100%}
+body{font-family:Vazirmatn,Tahoma,sans-serif;background:var(--cream);color:var(--ink);display:flex;flex-direction:column}
+header{background:var(--navy);color:#f6f2ea;padding:10px 14px;border-bottom:3px solid var(--gold)}
+header h1{margin:0 0 8px;font-size:17px;font-weight:600}
+header h1 small{color:#d9c79f;font-weight:400;font-size:12px;margin-inline-start:8px}
+.bar{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px}
+.lb{flex:0 0 auto;border:1px solid #5b6b86;background:transparent;color:#f6f2ea;border-radius:10px;padding:5px 12px;cursor:pointer;font:inherit;font-size:13px}
+.lb b{background:var(--gold);color:#1b2433;border-radius:6px;padding:0 6px;font-family:Georgia,serif}
+.lb.on{background:#f6f2ea;color:var(--navy);border-color:#f6f2ea}
+.nav{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:6px 14px;background:#ece5d6;font-size:13px}
+.nav button{border:1px solid var(--gold);background:#fff;color:var(--navy);border-radius:8px;padding:5px 12px;cursor:pointer;font:inherit}
+.nav button:disabled{opacity:.4;cursor:default}
+iframe{flex:1;width:100%;border:0;background:var(--cream)}
+.home{flex:1;overflow:auto;padding:22px 16px;max-width:760px;margin:0 auto;width:100%}
+.home h2{color:var(--navy);margin-top:0}
+.home .row{display:flex;gap:10px;align-items:center;background:#fffdf8;border:1px solid #e3d9c4;border-radius:12px;padding:10px 14px;margin:8px 0;cursor:pointer}
+.home .row b{background:var(--navy);color:#f6f2ea;border-radius:8px;padding:2px 10px;font-family:Georgia,serif}
+.home .row:hover{border-color:var(--gold)}
+@media(prefers-color-scheme:dark){:root{--cream:#1b2433;--ink:#eee8da}.nav{background:#222d40}.nav button{background:#2a3649;color:#eee8da}.home .row{background:#222d40;border-color:#3a4860}}
+</style></head><body>
+<header><h1>Menschen B1.1 <small>مجموعه‌ی درس‌های ۲ تا ۱۲ به ترتیب</small></h1><div class="bar" id="bar"></div></header>
+<div class="nav"><button id="prev">درس قبلی</button><span id="cur"></span><button id="next">درس بعدی</button></div>
+<div class="home" id="home"><h2>فهرست درس‌ها</h2><p>هر درس همان صفحه‌ی «Erinnerungswand» خودش است. با دکمه‌های بالا بین درس‌ها جابه‌جا شو. آخرین درسی که باز کردی یادآوری می‌شود.</p><div id="rows"></div></div>
+<iframe id="fr" style="display:none" title="lesson" allow="microphone; autoplay; clipboard-write"></iframe>
+<script>
+(function(){
+var LS=[2,3,4,5,6,7,8,9,10,11,12],KEY="b11last";
+var $=function(i){return document.getElementById(i)};
+function lsGet(){try{return localStorage.getItem(KEY)}catch(e){return null}}
+function lsSet(v){try{localStorage.setItem(KEY,v)}catch(e){}}
+var bar=$("bar"),rows=$("rows");
+bar.innerHTML='<button class="lb on" data-n="0">فهرست</button>'+LS.map(function(n){return'<button class="lb" data-n="'+n+'"><b>'+n+'</b></button>'}).join("");
+rows.innerHTML=LS.map(function(n){return'<div class="row" data-n="'+n+'"><b>'+n+'</b><span>Lektion '+n+'</span></div>'}).join("");
+var idx=0;
+function show(n){
+  idx=n;
+  document.querySelectorAll(".lb").forEach(function(b){b.classList.toggle("on",+b.dataset.n===n)});
+  var fr=$("fr"),home=$("home");
+  if(n===0){home.style.display="";fr.style.display="none";fr.removeAttribute("src");$("cur").textContent="فهرست"}
+  else{
+    home.style.display="none";fr.style.display="block";
+    var p=("0"+n).slice(-2);fr.src="lektion-"+p+"/index.html";
+    $("cur").textContent="Lektion "+n;lsSet(String(n));
+    try{history.replaceState(null,"","#"+n)}catch(e){}
+  }
+  var i=LS.indexOf(n);
+  $("prev").disabled=(n===0);$("next").disabled=(n===LS[LS.length-1]);
+}
+document.querySelectorAll(".lb,.row").forEach(function(b){b.onclick=function(){show(+b.dataset.n)}});
+$("prev").onclick=function(){var i=LS.indexOf(idx);show(i<=0?0:LS[i-1])};
+$("next").onclick=function(){var i=LS.indexOf(idx);show(idx===0?LS[0]:LS[Math.min(i+1,LS.length-1)])};
+var h=parseInt((location.hash||"").slice(1)||"0")||0;
+var last=parseInt(lsGet()||"0")||0;
+show(LS.indexOf(h)>=0?h:(LS.indexOf(last)>=0?last:0));
+})();
+</script></body></html>
