@@ -10,3 +10,11 @@ root `index.html` for the overview, or any `index.html` inside a folder.
 
 Progress is saved in the browser. Use the round 💾 button (bottom-left) to save
 a backup file or restore it on another device.
+
+## Optional online voice (☁️)
+
+Pages with speech have a ☁️ button (next to 💾). It reads German text with a neural
+voice from Google Cloud TTS, Microsoft Azure Speech or ElevenLabs, using *your own* API key.
+The key stays in that browser only (never in progress backups); if it is off or fails, the
+device voice is used. Fetched audio is cached for the session. Costs are billed by the provider.
+

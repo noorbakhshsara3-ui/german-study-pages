@@ -2324,7 +2324,7 @@ R.className+=' ready';
 var $=function(i){return document.getElementById(i)};
 var PAGE=(document.title||"page").slice(0,80);
 function msg(t){$("pbk-msg").textContent=t}
-function snap(){var d={};try{for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i);d[k]=localStorage.getItem(k)}}catch(e){}
+function snap(){var d={};try{for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i);if(k.indexOf('onlineTTS')===0)continue;d[k]=localStorage.getItem(k)}}catch(e){}
 return{app:"progress-backup",v:1,page:PAGE,saved:new Date().toISOString(),data:d}}
 function restore(text){var o;try{o=JSON.parse(text)}catch(e){msg("این فایل پشتیبان معتبر نیست.");return}
 if(!o||o.app!=="progress-backup"||!o.data||typeof o.data!=="object"){msg("این فایل مال این نوع پشتیبان نیست.");return}
@@ -2343,5 +2343,161 @@ $("pbk-paste").onclick=function(){var v=($("pbk-txt").value||"").trim();if(!v){m
 })();
 </script>
 <!--progress-backup:end-->
+
+<!--online-voice:start-->
+<style>
+#ov-btn{position:fixed;left:62px;bottom:calc(12px + env(safe-area-inset-bottom,0px));z-index:2147483000;width:42px;height:42px;border-radius:50%;border:1px solid #a98348;background:#27344a;color:#f6f2ea;font-size:19px;line-height:1;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.3);opacity:.85;padding:0}
+#ov-btn.on{background:#2d6a4f}
+#ov-btn:hover,#ov-btn:focus{opacity:1}
+#ov-scrim{position:fixed;inset:0;z-index:2147483001;background:rgba(0,0,0,.5);display:none;align-items:center;justify-content:center;padding:16px}
+#ov-scrim.on{display:flex}
+#ov-sheet{direction:rtl;font:15px/1.8 Vazirmatn,Tahoma,sans-serif;background:#f6f2ea;color:#1f2937;border:2px solid #a98348;border-radius:14px;max-width:440px;width:100%;max-height:90vh;overflow:auto;padding:16px}
+#ov-sheet h3{margin:0 0 6px;color:#27344a;font-size:17px}
+#ov-sheet p,#ov-sheet label.l{margin:6px 0;font-size:13px;display:block}
+#ov-sheet input[type=text],#ov-sheet input[type=password],#ov-sheet select{width:100%;box-sizing:border-box;padding:9px;border-radius:8px;border:1px solid #a98348;font:inherit;direction:ltr;background:#fff;color:#1f2937}
+#ov-sheet button{display:block;width:100%;box-sizing:border-box;margin:8px 0;padding:10px;border-radius:10px;border:1px solid #a98348;background:#27344a;color:#f6f2ea;font:inherit;cursor:pointer}
+#ov-sheet button.g{background:#fff;color:#27344a}
+#ov-msg{font-weight:700;min-height:1.4em;font-size:13px}
+#ov-msg.ok{color:#2d6a4f}#ov-msg.err{color:#b3261e}
+.ovwarn{background:#fff4d6;border:1px solid #d9b45a;border-radius:8px;padding:8px;font-size:12.5px}
+@media(prefers-color-scheme:dark){#ov-sheet{background:#1b2433;color:#eee8da}#ov-sheet h3{color:#d9c79f}#ov-sheet button.g{background:#2a3649;color:#eee8da}#ov-sheet input,#ov-sheet select{background:#2a3649!important;color:#eee8da!important}.ovwarn{background:#3a3220;color:#eee8da}#ov-msg.ok{color:#8fd4a8}#ov-msg.err{color:#ff8a80}}
+</style>
+<button id="ov-btn" type="button" title="صدای آنلاین طبیعی" aria-label="صدای آنلاین طبیعی">☁️</button>
+<div id="ov-scrim"><div id="ov-sheet" role="dialog" aria-modal="true">
+<h3>☁️ صدای آنلاین طبیعی</h3>
+<p>با کلید API خودت، متن‌های آلمانی با صدای عصبی (Neural) خوانده می‌شود. اگر خاموش باشد یا خطا بدهد، صدای خود دستگاه پخش می‌شود.</p>
+<div class="ovwarn">کلید فقط در همین مرورگر ذخیره می‌شود و فقط به همان سرویس فرستاده می‌شود. هزینه‌ی مصرف با حساب خودت است. بهتر است کلیدی بسازی که محدود به Text-to-Speech و همین آدرس سایت باشد. در فایل پشتیبان پیشرفت هم نمی‌آید.</div>
+<label class="l"><input type="checkbox" id="ov-on"> صدای آنلاین روشن باشد</label>
+<label class="l">سرویس
+<select id="ov-prov"><option value="google">Google Cloud Text-to-Speech</option><option value="azure">Microsoft Azure Speech</option><option value="eleven">ElevenLabs</option></select></label>
+<label class="l">کلید API <input type="password" id="ov-key" autocomplete="off" spellcheck="false" placeholder="API key"></label>
+<label class="l" id="ov-regw">منطقه‌ی Azure (مثلاً westeurope) <input type="text" id="ov-region" placeholder="westeurope"></label>
+<label class="l">صدا <select id="ov-voice"></select></label>
+<label class="l" id="ov-customw">شناسه‌ی صدا (Voice ID) <input type="text" id="ov-custom" placeholder="voice id"></label>
+<button type="button" id="ov-save">ذخیره</button>
+<button type="button" class="g" id="ov-test">🔊 امتحان صدا</button>
+<button type="button" class="g" id="ov-del">حذف کلید از این مرورگر</button>
+<div id="ov-msg" role="status"></div>
+<button type="button" class="g" id="ov-close">بستن</button>
+</div></div>
+<script>
+(function(){
+var LS="onlineTTS.v1",$=function(i){return document.getElementById(i)};
+var PRE={google:[["de-DE-Neural2-B","Neural2 B (مرد)"],["de-DE-Neural2-D","Neural2 D (مرد)"],["de-DE-Neural2-A","Neural2 A (زن)"],["de-DE-Neural2-C","Neural2 C (زن)"],["de-DE-Studio-B","Studio B (مرد)"],["de-DE-Studio-C","Studio C (زن)"]],
+ azure:[["de-DE-KatjaNeural","Katja (زن)"],["de-DE-ConradNeural","Conrad (مرد)"],["de-DE-AmalaNeural","Amala (زن)"],["de-DE-KillianNeural","Killian (مرد)"],["de-DE-SeraphinaMultilingualNeural","Seraphina (زن)"],["de-DE-FlorianMultilingualNeural","Florian (مرد)"]],
+ eleven:[["21m00Tcm4TlvDq8ikWAM","Rachel (پیش‌فرض ElevenLabs)"],["__custom","شناسه‌ی دلخواه…"]]};
+function load(){try{return JSON.parse(localStorage.getItem(LS)||"null")||{}}catch(e){return{}}}
+function store(c){try{localStorage.setItem(LS,JSON.stringify(c));return true}catch(e){return false}}
+var cfg=load();
+function active(){return !!(cfg.on&&cfg.key&&cfg.provider)}
+function msg(t,k){var m=$("ov-msg");m.textContent=t||"";m.className=k||""}
+function paint(){$("ov-btn").className=active()?"on":""}
+/* ---------- audio engine ---------- */
+var SILENT="data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=";
+var audio=new Audio(),unlocked=false,queue=[],busy=false,token=0,cache={},cacheN=0,warned=false;
+function unlock(){if(unlocked)return;unlocked=true;try{audio.src=SILENT;var p=audio.play();if(p&&p.catch)p.catch(function(){})}catch(e){}}
+["pointerdown","touchend","click","keydown"].forEach(function(e){document.addEventListener(e,unlock,true)});
+function b64blob(b64,type){var s=atob(b64),n=s.length,u=new Uint8Array(n);for(var i=0;i<n;i++)u[i]=s.charCodeAt(i);return new Blob([u],{type:type})}
+function esc(t){return t.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")}
+function httpErr(r,body){var m="خطا "+r.status;try{var j=JSON.parse(body);m+=": "+((j.error&&(j.error.message||j.error))||j.detail&&(j.detail.message||j.detail)||"").toString().slice(0,120)}catch(e){m+=body?": "+body.slice(0,100):""}return new Error(m)}
+function synth(text){
+  var c=cfg,p=c.provider,v=c.voice||"",key=c.key;
+  if(p==="google"){
+    return fetch("https://texttospeech.googleapis.com/v1/text:synthesize?key="+encodeURIComponent(key),{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({input:{text:text},voice:{languageCode:"de-DE",name:v||"de-DE-Neural2-B"},audioConfig:{audioEncoding:"MP3"}})})
+    .then(function(r){return r.text().then(function(b){if(!r.ok)throw httpErr(r,b);return b64blob(JSON.parse(b).audioContent,"audio/mpeg")})});
+  }
+  if(p==="azure"){
+    var reg=(c.region||"westeurope").replace(/[^a-z0-9]/gi,"");
+    var ssml="<speak version='1.0' xml:lang='de-DE'><voice xml:lang='de-DE' name='"+(v||"de-DE-KatjaNeural").replace(/[^A-Za-z0-9-]/g,"")+"'>"+esc(text)+"</voice></speak>";
+    return fetch("https://"+reg+".tts.speech.microsoft.com/cognitiveservices/v1",{method:"POST",headers:{"Ocp-Apim-Subscription-Key":key,"Content-Type":"application/ssml+xml","X-Microsoft-OutputFormat":"audio-24khz-48kbitrate-mono-mp3"},body:ssml})
+    .then(function(r){if(!r.ok)return r.text().then(function(b){throw httpErr(r,b)});return r.blob()});
+  }
+  var vid=(v||"21m00Tcm4TlvDq8ikWAM").replace(/[^A-Za-z0-9]/g,"");
+  return fetch("https://api.elevenlabs.io/v1/text-to-speech/"+vid+"?output_format=mp3_44100_64",{method:"POST",headers:{"xi-api-key":key,"Content-Type":"application/json",Accept:"audio/mpeg"},body:JSON.stringify({text:text,model_id:"eleven_multilingual_v2"})})
+  .then(function(r){if(!r.ok)return r.text().then(function(b){throw httpErr(r,b)});return r.blob()});
+}
+function getUrl(text){
+  var k=cfg.provider+"|"+(cfg.voice||"")+"|"+text;
+  if(cache[k])return Promise.resolve(cache[k]);
+  return synth(text).then(function(b){var u=URL.createObjectURL(b);if(cacheN>150){cache={};cacheN=0}cache[k]=u;cacheN++;return u});
+}
+function stopAll(){token++;queue.length=0;busy=false;try{audio.pause()}catch(e){}}
+function flushNative(it,err){
+  if(!warned){warned=true;toast("صدای آنلاین کار نکرد ("+(err&&err.message||err)+"). صدای دستگاه پخش می‌شود.")}
+  var all=[it].concat(queue.splice(0));busy=false;all.forEach(function(x){try{x.nSpeak(x.u)}catch(e){}});
+}
+function pump(){
+  if(busy||!queue.length)return;
+  busy=true;var it=queue.shift(),my=token,u=it.u;
+  var text=String(u.text||"").slice(0,700);
+  getUrl(text).then(function(url){
+    if(my!==token){busy=false;return}
+    audio.onended=function(){if(my!==token)return;busy=false;try{u.onend&&u.onend({type:"end"})}catch(e){}pump()};
+    audio.onerror=function(){if(my!==token)return;flushNative(it,"پخش فایل ممکن نشد")};
+    audio.src=url;var r=Math.max(.5,Math.min(2,+u.rate||1));audio.defaultPlaybackRate=r;audio.playbackRate=r;try{audio.volume=u.volume==null?1:Math.max(0,Math.min(1,+u.volume))}catch(e){}
+    var pr=audio.play();
+    if(pr&&pr.then)pr.then(function(){try{u.onstart&&u.onstart({type:"start"})}catch(e){}},function(e){if(my===token)flushNative(it,e)});
+  }).catch(function(e){if(my!==token){busy=false;return}flushNative(it,e)});
+}
+function patch(w){
+  try{var ss=w.speechSynthesis;if(!ss||ss.__ov)return;ss.__ov=1;
+    var nSpeak=ss.speak.bind(ss),nCancel=ss.cancel.bind(ss);
+    ss.speak=function(u){
+      var lang=(u&&(u.lang||(u.voice&&u.voice.lang)))||"";
+      if(active()&&u&&u.text&&(!lang||/^de/i.test(lang))){queue.push({u:u,nSpeak:nSpeak});pump();return}
+      nSpeak(u);
+    };
+    ss.cancel=function(){stopAll();nCancel()};
+  }catch(e){}
+}
+function hook(f){
+  if(f.__ovh)return;f.__ovh=1;
+  var go=function(){try{patch(f.contentWindow)}catch(e){}};
+  f.addEventListener("load",go);go();
+}
+patch(window);
+function scan(){var l=document.querySelectorAll("iframe");for(var i=0;i<l.length;i++)hook(l[i])}
+scan();try{new MutationObserver(scan).observe(document.documentElement,{childList:true,subtree:true})}catch(e){}
+/* ---------- UI ---------- */
+function toast(t){msg(t,"err");var d=document.createElement("div");d.textContent=t;d.setAttribute("style","position:fixed;left:12px;right:12px;bottom:70px;z-index:2147483002;background:#27344a;color:#f6f2ea;border:1px solid #a98348;border-radius:10px;padding:10px;font:13px/1.7 Vazirmatn,Tahoma,sans-serif;direction:rtl");document.body.appendChild(d);setTimeout(function(){d.remove()},6000)}
+function fillVoices(sel){
+  var p=$("ov-prov").value,list=PRE[p],h="";
+  list.forEach(function(x){h+="<option value='"+x[0]+"'>"+x[1]+"</option>"});
+  if(p!=="eleven")h+="<option value='__custom'>نام دلخواه…</option>";
+  $("ov-voice").innerHTML=h;
+  var known=list.some(function(x){return x[0]===sel});
+  $("ov-voice").value=known?sel:(sel?"__custom":list[0][0]);
+  $("ov-custom").value=known?"":(sel||"");
+  show();
+}
+function show(){var p=$("ov-prov").value;$("ov-regw").style.display=p==="azure"?"block":"none";$("ov-customw").style.display=$("ov-voice").value==="__custom"?"block":"none"}
+function open_(){
+  $("ov-on").checked=!!cfg.on;$("ov-prov").value=cfg.provider||"google";$("ov-key").value=cfg.key||"";$("ov-region").value=cfg.region||"";
+  fillVoices(cfg.voice||"");msg("");$("ov-scrim").className="on";
+}
+function read(){
+  var v=$("ov-voice").value==="__custom"?$("ov-custom").value.trim():$("ov-voice").value;
+  return{on:$("ov-on").checked,provider:$("ov-prov").value,key:$("ov-key").value.trim(),region:$("ov-region").value.trim(),voice:v};
+}
+$("ov-btn").onclick=open_;
+$("ov-close").onclick=function(){$("ov-scrim").className=""};
+$("ov-scrim").onclick=function(e){if(e.target===this)this.className=""};
+$("ov-prov").onchange=function(){fillVoices("")};
+$("ov-voice").onchange=show;
+$("ov-save").onclick=function(){
+  var c=read();if(c.on&&!c.key){msg("اول کلید API را وارد کن.","err");return}
+  cfg=c;warned=false;cache={};cacheN=0;msg(store(c)?"ذخیره شد.":"ذخیره ممکن نشد (حافظه‌ی مرورگر بسته است).",store(c)?"ok":"err");paint();
+};
+$("ov-test").onclick=function(){
+  var c=read();if(!c.key){msg("اول کلید API را وارد کن.","err");return}
+  unlock();var old=cfg;cfg=c;cfg.on=true;cache={};cacheN=0;msg("در حال دریافت صدا…");
+  stopAll();
+  synth("Guten Tag! Wie geht es Ihnen?").then(function(b){var u=URL.createObjectURL(b);audio.onended=null;audio.onerror=null;audio.src=u;audio.defaultPlaybackRate=1;audio.playbackRate=1;return audio.play()}).then(function(){msg("صدا پخش شد. اگر خوب بود «ذخیره» را بزن.","ok")},function(e){msg("خطا: "+(e&&e.message||e),"err")}).then(function(){cfg=old});
+};
+$("ov-del").onclick=function(){try{localStorage.removeItem(LS)}catch(e){}cfg={};$("ov-key").value="";$("ov-on").checked=false;stopAll();paint();msg("کلید حذف شد.","ok")};
+paint();
+})();
+</script>
+<!--online-voice:end-->
 
 </body></html>
