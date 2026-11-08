@@ -3,6 +3,7 @@
 Self-contained HTML study pages for learning German (Menschen course). Open the
 root `index.html` for the overview, or any `index.html` inside a folder.
 
+- `deutsch-b2-hossein/` – Deutsch B2 study plan app, with the progress saved so far (study minutes, cards, weak points, lesson notes) as the starting data
 - `menschen-a1-2/` – Menschen A1.2 lesson collection (lessons 13–24)
 - `vocab-thematisch/` – thematic vocabulary
 - `erinnerungswand/` – Menschen B1.1 lessons 2–12: `Menschen_B1-1_Alle_Lektionen_2-12.html` is the combined hub with all lessons (`index.html` redirects to it); each lesson is also in `lektion-02 … 12/`
