@@ -1,0 +1,553 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Lektion 23 Erklärfilm</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500..800&family=Schibsted+Grotesk:wght@400;500;600&family=Vazirmatn:wght@400;600;700&display=swap">
+<style>
+/* Layout: one phone-width "film screen" (scene stage) over a sticky dock with Persian subtitles and player controls.
+   Concept: textbook page + yellow highlighter. Pronouns get marked like in the book. */
+:root{
+  --bg:#EEF1F7; --surface:#FFFFFF; --fg:#13203A; --muted:#55627F; --line:#D5DBE8;
+  --accent:#C8243C; --on-accent:#FFFFFF;
+  --der:#2F5DA8; --die:#C8243C; --das:#217A52;
+  --ok:#217A52; --mid:#8A5F00; --bad:#C8243C;
+  --mark:rgba(255,214,69,.85); --ring:rgba(200,36,60,.35);
+  --tint1:#EAF3E3; --tint2:#DDF0EE; --tint3:#E3EEFA; --tint4:#F4E6F1; --tint5:#FFF3C9;
+  --fd:'Bricolage Grotesque','Schibsted Grotesk',system-ui,sans-serif;
+  --fb:'Schibsted Grotesk',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --ff:'Vazirmatn','Segoe UI',Tahoma,system-ui,sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0E1527; --surface:#17203A; --fg:#E9EDF7; --muted:#9AA7C4; --line:#2A3556;
+    --accent:#FF6B7E; --on-accent:#1A0C10;
+    --der:#86AEF2; --die:#FF7A8A; --das:#62CF98;
+    --ok:#62CF98; --mid:#E8B44A; --bad:#FF7A8A;
+    --mark:rgba(255,214,69,.34); --ring:rgba(255,107,126,.45);
+    --tint1:#1F2E27; --tint2:#193033; --tint3:#1B2A45; --tint4:#33223A; --tint5:#3A3320;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0E1527; --surface:#17203A; --fg:#E9EDF7; --muted:#9AA7C4; --line:#2A3556;
+  --accent:#FF6B7E; --on-accent:#1A0C10;
+  --der:#86AEF2; --die:#FF7A8A; --das:#62CF98;
+  --ok:#62CF98; --mid:#E8B44A; --bad:#FF7A8A;
+  --mark:rgba(255,214,69,.34); --ring:rgba(255,107,126,.45);
+  --tint1:#1F2E27; --tint2:#193033; --tint3:#1B2A45; --tint4:#33223A; --tint5:#3A3320;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--fb);font-size:16px;line-height:1.45;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:14px 0}
+.wrap{max-width:600px;margin:0 auto;display:flex;flex-direction:column;gap:12px}
+.fa{font-family:var(--ff);direction:rtl;text-align:right;line-height:1.75}
+button{font:inherit;color:inherit;cursor:pointer}
+:focus-visible{outline:3px solid var(--blue,var(--der));outline-offset:2px}
+
+/* header */
+.top{display:flex;align-items:center;gap:12px}
+.badge{flex:none;width:52px;height:52px;background:var(--accent);color:var(--on-accent);border-radius:6px;
+  font:700 30px/52px var(--fd);text-align:center;letter-spacing:-.02em}
+.top h1{margin:0;font:700 20px/1.15 var(--fd);letter-spacing:-.01em;text-wrap:balance}
+.top p{margin:2px 0 0;color:var(--muted);font-size:13px}
+.dots{display:flex;gap:5px}
+.dot{flex:1;height:22px;background:none;border:0;padding:0;position:relative}
+.dot::before{content:'';position:absolute;inset:8px 0;background:var(--line);border-radius:3px;transition:background .3s}
+.dot.seen::before{background:var(--der)}
+.dot.cur::before{background:var(--accent)}
+.eyebrow{display:flex;justify-content:space-between;gap:10px;font-size:12px;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;margin-top:-6px}
+
+/* stage */
+.stage{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px 16px 22px;min-height:440px;min-width:0}
+.scene[hidden]{display:none}
+.scene{animation:fadein .4s ease}
+@keyframes fadein{from{opacity:0}to{opacity:1}}
+h2.lead{font:700 26px/1.12 var(--fd);margin:0 0 16px;letter-spacing:-.015em;text-wrap:balance}
+h3.sub{font:600 12px/1 var(--fb);letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin:0 0 8px}
+
+/* reveal system */
+.js [data-s]{opacity:0;transform:translateY(10px);transition:opacity .45s ease,transform .45s ease}
+.js [data-s].on{opacity:1;transform:none}
+.js [data-s].now{animation:pulse 1.3s ease-out}
+@keyframes pulse{0%{box-shadow:0 0 0 0 var(--ring)}100%{box-shadow:0 0 0 12px transparent}}
+mark{background-image:linear-gradient(transparent 14%,var(--mark) 14%,var(--mark) 90%,transparent 90%);background-repeat:no-repeat;background-size:100% 100%;color:inherit;padding:0 .14em;border-radius:2px;transition:background-size .7s ease .3s}
+.js [data-s] mark{background-size:0% 100%}
+.js [data-s].on mark{background-size:100% 100%}
+[data-say]{cursor:pointer}
+.hint{font-size:12px;color:var(--muted);margin:14px 0 0}
+
+/* articles */
+.art{font-weight:600}.art.der{color:var(--der)}.art.die{color:var(--die)}.art.das{color:var(--das)}
+
+/* scene 1 vocab */
+.group{margin-bottom:16px;padding:12px;border-radius:10px;background:var(--tint3)}
+.group.g2{background:var(--tint5)}.group.g3{background:var(--tint4)}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:6px 10px;display:flex;flex-direction:column;min-width:0}
+.chip b{font-weight:600}
+.chip i{font:400 13px/1.5 var(--ff);font-style:normal;color:var(--muted);direction:rtl;text-align:right}
+
+/* timeline */
+.tl{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:14px;border-inline-start:2px solid var(--line);padding-inline-start:16px;margin-inline-start:6px}
+.tl li{position:relative}
+.tl li::before{content:'';position:absolute;inset-inline-start:-23px;top:6px;width:12px;height:12px;border-radius:50%;background:var(--accent);border:3px solid var(--surface)}
+.tl .de{font-weight:500;margin:0}
+.tl .tag{display:inline-block;margin-top:5px;font-size:12.5px;color:var(--muted);background:var(--bg);border-radius:6px;padding:2px 8px}
+
+/* sentences */
+.sent{font:500 20px/1.35 var(--fd);margin:0 0 10px;padding:10px 12px;border-radius:10px;background:var(--bg);text-wrap:balance}
+.sent.big{font-size:24px;background:var(--tint5);padding:14px}
+.sent u{text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:4px;text-decoration-color:var(--accent)}
+.arrow{display:flex;justify-content:center;margin:2px 0 8px;color:var(--muted)}
+.rules{display:grid;gap:10px;margin-top:14px}
+.rule{display:grid;grid-template-columns:30px 1fr;gap:10px;align-items:start;padding:10px 12px;border:1px solid var(--line);border-radius:10px}
+.rule .n{width:30px;height:30px;border-radius:50%;background:var(--der);color:var(--surface);font:700 15px/30px var(--fd);text-align:center}
+.rule p{margin:0}.rule .fa{font-size:14px;color:var(--muted);margin-top:2px}
+
+/* table */
+.tbl{display:grid;grid-template-columns:.8fr 1fr 1fr;gap:6px;font-size:14px}
+.tbl>.hd{font:600 12px/1 var(--fb);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);padding:2px 4px}
+.tbl .row{display:contents}
+.tbl .cell{background:var(--bg);border-radius:8px;padding:8px;min-width:0;overflow-wrap:anywhere}
+.tbl .cell strong{display:block;font:700 22px/1.1 var(--fd);margin-bottom:2px}
+.tbl .lab{display:flex;flex-direction:column;justify-content:center;font-weight:600}
+.tbl .lab small{font-weight:400;color:var(--muted)}
+.row[data-s]{display:contents}
+.cmp{display:grid;gap:8px;margin-top:14px}
+.cmp>div{border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:14.5px}
+
+/* satisfaction */
+.cards3{display:grid;gap:10px}
+.sat{display:grid;grid-template-columns:52px 1fr;gap:12px;align-items:center;border:1px solid var(--line);border-radius:12px;padding:12px}
+.sat p{margin:0;font-weight:500}.sat p+p{margin-top:2px}
+.face{width:48px;height:48px}
+.sat.ok .face{color:var(--ok)}.sat.mid .face{color:var(--mid)}.sat.bad .face{color:var(--bad)}
+.note{margin-top:12px;padding:12px;border-radius:10px;background:var(--tint3)}
+.note p{margin:0}.note .fa{font-size:14px;margin-top:4px}
+
+/* school system */
+.ladder{display:flex;flex-direction:column-reverse;gap:8px}
+.step{border-radius:10px;padding:10px 12px;display:flex;justify-content:space-between;gap:10px;align-items:baseline;flex-wrap:wrap}
+.step b{font:700 17px/1.2 var(--fd)}.step span{font-size:13.5px;color:var(--muted)}
+.s-krippe{background:var(--tint1)}.s-kiga{background:var(--tint2)}.s-grund{background:var(--tint3)}
+.tracks{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.track{border:1px solid var(--line);border-radius:10px;padding:10px;min-width:0;background:var(--surface)}
+.track b{display:block;font:700 16px/1.2 var(--fd)}
+.track .kl{display:block;font-size:12.5px;color:var(--muted);margin:2px 0 6px}
+.track .go{font-size:13.5px;margin:0}
+.track .fa{font-size:12.5px;color:var(--muted);margin:4px 0 0;line-height:1.6}
+.t-gym{background:var(--tint5)}.t-ges{background:var(--tint4)}
+.who{display:grid;gap:10px;margin-top:14px}
+.who>div{border:1px dashed var(--line);border-radius:10px;padding:10px 12px;font-size:14.5px}
+.who b{font-family:var(--fd)}
+
+/* quiz */
+.qcard{border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:10px}
+.qtxt{margin:0 0 10px;font:500 18px/1.4 var(--fd)}
+.blank{display:inline-block;min-width:3.2em;border-bottom:3px solid var(--accent);text-align:center;font-weight:700}
+.blank.done{border-bottom-color:transparent}
+.opts{display:flex;flex-wrap:wrap;gap:8px}
+.opt{min-width:64px;padding:8px 14px;border-radius:999px;border:1.5px solid var(--line);background:var(--bg);font-weight:600}
+.opt:hover:not(:disabled){border-color:var(--der)}
+.opt:disabled{cursor:default}
+.opt.right{border-color:var(--ok);background:var(--ok);color:var(--surface)}
+.opt.wrong{border-color:var(--bad);color:var(--bad);text-decoration:line-through}
+.why{margin:10px 0 0;font-size:14.5px;color:var(--fg)}
+.score{font:700 18px/1.2 var(--fd);margin:6px 0 10px}
+.reset{border:1.5px solid var(--line);background:none;border-radius:999px;padding:8px 16px}
+
+/* dock */
+.dock{position:sticky;bottom:0;z-index:5;margin-top:4px;background:var(--surface);border:1px solid var(--line);border-bottom:0;border-radius:14px 14px 0 0;
+  padding:10px 12px calc(10px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;gap:8px;box-shadow:0 -6px 20px rgba(0,0,0,.06)}
+.cap{margin:0;font-size:15px;min-height:3.4em;max-height:7.6em;overflow:auto}
+.ctl{display:flex;align-items:center;gap:8px}
+.ib{width:44px;height:44px;border-radius:50%;border:1.5px solid var(--line);background:var(--bg);display:grid;place-items:center;flex:none}
+.ib svg{width:20px;height:20px;fill:currentColor}
+.ib.play{width:56px;height:56px;background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.ib.play svg{width:24px;height:24px}
+.ib[aria-pressed="false"]{color:var(--muted)}
+.sp{flex:1}
+select.speed{height:44px;border-radius:999px;border:1.5px solid var(--line);background:var(--bg);color:var(--fg);padding:0 10px;font:inherit}
+
+@media (prefers-reduced-motion: reduce){
+  .js [data-s]{transition:none;transform:none}
+  .js [data-s].now{animation:none}
+  .scene{animation:none}
+  mark{transition:none}
+}
+@media (max-width:380px){.sent.big{font-size:21px}h2.lead{font-size:23px}}
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div class="badge" aria-hidden="true">23</div>
+    <div>
+      <h1>Beruf &amp; Ausbildung</h1>
+      <p class="fa" dir="rtl" lang="fa">درس ۲۳ · شغل و آموزش · Menschen B1.1</p>
+    </div>
+  </header>
+  <nav class="dots" id="dots" aria-label="Szenen"></nav>
+  <div class="eyebrow"><span id="eyL"></span><span id="eyR" class="fa" dir="rtl" lang="fa"></span></div>
+
+  <main class="stage" id="stage">
+
+    <!-- 1 Wortschatz -->
+    <section class="scene" data-title="Wortschatz" data-fa-title="واژگان" data-fa="دکمه‌ی پخش را بزن تا درس مثل یک فیلم کوتاه جلو برود. روی هر جمله‌ی آلمانی هم می‌توانی بزنی تا تلفظش را بشنوی.">
+      <h2 class="lead" data-s="1" data-say="Lektion dreiundzwanzig. Beruf und Ausbildung." data-fa="درس ۲۳: شغل و آموزش. اول واژه‌های کلیدی را ببین. رنگ آرتیکل‌ها: آبی = der، قرمز = die، سبز = das. هر اسم را همراه آرتیکلش یاد بگیر.">Beruf &amp; Ausbildung: die wichtigsten Wörter</h2>
+      <div class="group g2" data-s="2" data-say="die Schule, die Note, das Zeugnis, die Prüfung, der Schulabschluss" data-fa="مدرسه: Schule، نمره: Note، کارنامه: Zeugnis، امتحان: Prüfung (شفاهی: mündlich، کتبی: schriftlich) و مدرک پایان مدرسه: Schulabschluss.">
+        <h3 class="sub">Schule</h3>
+        <div class="chips">
+          <span class="chip"><b><span class="art die">die</span> Schule</b><i>مدرسه</i></span>
+          <span class="chip"><b><span class="art die">die</span> Note</b><i>نمره</i></span>
+          <span class="chip"><b><span class="art das">das</span> Zeugnis</b><i>کارنامه</i></span>
+          <span class="chip"><b><span class="art die">die</span> Prüfung</b><i>امتحان (mündlich شفاهی / schriftlich کتبی)</i></span>
+          <span class="chip"><b><span class="art der">der</span> Schulabschluss</b><i>مدرک پایان مدرسه</i></span>
+        </div>
+      </div>
+      <div class="group" data-s="3" data-say="die Ausbildung, die Lehre, das Studium, die Universität, das Semester" data-fa="Ausbildung و Lehre یعنی آموزش حرفه‌ای (کارآموزی). Studium تحصیل در دانشگاه است، Universität دانشگاه و Semester نیم‌سال تحصیلی.">
+        <h3 class="sub">Ausbildung &amp; Studium</h3>
+        <div class="chips">
+          <span class="chip"><b><span class="art die">die</span> Ausbildung</b><i>آموزش حرفه‌ای</i></span>
+          <span class="chip"><b><span class="art die">die</span> Lehre</b><i>کارآموزی</i></span>
+          <span class="chip"><b><span class="art das">das</span> Studium</b><i>تحصیل دانشگاهی</i></span>
+          <span class="chip"><b><span class="art die">die</span> Universität</b><i>دانشگاه</i></span>
+          <span class="chip"><b><span class="art das">das</span> Semester</b><i>ترم</i></span>
+        </div>
+      </div>
+      <div class="group g3" data-s="4" data-say="der Lebenslauf, die Bewerbung" data-fa="و برای پیدا کردن کار: Lebenslauf یعنی رزومه و Bewerbung یعنی درخواست استخدام.">
+        <h3 class="sub">Bewerbung</h3>
+        <div class="chips">
+          <span class="chip"><b><span class="art der">der</span> Lebenslauf</b><i>رزومه</i></span>
+          <span class="chip"><b><span class="art die">die</span> Bewerbung</b><i>درخواست استخدام</i></span>
+        </div>
+      </div>
+      <p class="hint">Tipp: Tippe auf einen blauen Satz, um ihn zu hören.</p>
+    </section>
+
+    <!-- 2 Mark Brügge -->
+    <section class="scene" data-title="Lesetext" data-fa-title="متن: Mark Brügge" data-fa="ماجرای Mark Brügge را با جمله‌های ساده دنبال کن.">
+      <h2 class="lead" data-s="1" data-say="Ein Mensch, der nicht weiß, was er will." data-fa="Mark Brügge کسی بود که نمی‌دانست چه می‌خواهد. توجه کن: «der» اینجا ضمیر موصولی است؛ در صحنه‌ی بعد توضیحش می‌دهم.">Ein Mensch, <mark>der</mark> nicht weiß, was er will.</h2>
+      <ol class="tl">
+        <li data-s="2" data-fa="بعد از Abitur پزشکی را شروع می‌کند و بعد از یک ترم رها می‌کند. anfangen و aufhören هر دو جداشدنی‌اند و در Perfekt با haben می‌آیند.">
+          <p class="de" data-say="Er hat Medizin angefangen und hat nach einem Semester wieder aufgehört.">Er hat Medizin angefangen und hat nach einem Semester wieder aufgehört.</p>
+          <span class="tag">hat angefangen · hat aufgehört</span>
+        </li>
+        <li data-s="3" data-fa="بعد کارآموزی برقکار (Elektroinstallateur) را شروع می‌کند، ولی بعد از سه ماه به دانشگاه برمی‌گردد. فعل حرکتی zurückgehen با sein می‌آید: ist zurückgegangen.">
+          <p class="de" data-say="Dann hat er eine Lehre begonnen und ist nach drei Monaten an die Uni zurückgegangen.">Dann hat er eine Lehre begonnen und ist nach drei Monaten an die Uni zurückgegangen.</p>
+          <span class="tag">hat begonnen · ist zurückgegangen (sein = Bewegung)</span>
+        </li>
+        <li data-s="4" data-fa="حقوق (Jura) هم «کار او» نبود. nicht mein Ding یعنی «به من نمی‌خورد» و حالت محاوره‌ای دارد. پس چیز تازه‌ای امتحان کرد.">
+          <p class="de" data-say="Jura war nicht sein Ding. Also hat er etwas Neues ausprobiert.">Jura war „nicht sein Ding“. Also hat er etwas Neues ausprobiert.</p>
+          <span class="tag">nicht mein Ding = mag ich nicht (umgangssprachlich)</span>
+        </li>
+        <li data-s="5" data-fa="یک نجار پیر (Schreiner) به او یک نصیحت می‌دهد: کاری را که انجام می‌دهی دوست داشته باش! «die Arbeit, die du machst» یک جمله‌ی موصولی است: Arbeit مؤنث است و مفعول machen است، پس Akkusativ و die. فعل machst آخر جمله می‌آید.">
+          <p class="de" data-say="Ein alter Schreiner gibt ihm einen Rat: Liebe die Arbeit, die du machst!">Ein alter Schreiner gibt ihm einen Rat: <mark>Liebe die Arbeit, die du machst!</mark></p>
+          <span class="tag">die du machst = Relativsatz (Akkusativ)</span>
+        </li>
+        <li data-s="6" data-fa="امروز او باغبان و طراح فضای سبز (Landschaftsgärtner) است و راضی است. او کتابی برای جوانان نوشته که به انتخاب شغل کمک می‌کند.">
+          <p class="de" data-say="Heute ist er Landschaftsgärtner und zufrieden. Er hat ein Buch für junge Leute geschrieben.">Heute ist er Landschaftsgärtner und zufrieden. Er hat ein Buch für junge Leute geschrieben.</p>
+          <span class="tag">hat geschrieben</span>
+        </li>
+      </ol>
+    </section>
+
+    <!-- 3 Relativsatz Idee -->
+    <section class="scene" data-title="Relativsatz" data-fa-title="جمله‌ی موصولی" data-fa="می‌خواهیم دو جمله را با یک ضمیر موصولی به هم وصل کنیم.">
+      <h2 class="lead">So baust du einen Relativsatz</h2>
+      <p class="sent" data-s="1" data-say="Das ist der Beruf." data-fa="جمله‌ی اول: این همان شغل است.">Das ist <b>der Beruf</b>.</p>
+      <p class="sent" data-s="2" data-say="Der Beruf passt zu mir." data-fa="جمله‌ی دوم درباره‌ی همان شغل حرف می‌زند: این شغل به من می‌خورد.">Der Beruf passt zu mir.</p>
+      <div class="arrow" data-s="3" aria-hidden="true"><svg width="28" height="36" viewBox="0 0 28 36"><path d="M14 2 V30 M5 22 L14 31 L23 22" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      <p class="sent big" data-s="3" data-say="Das ist der Beruf, der zu mir passt." data-fa="جمله‌ی دوم را به «der» کوتاه می‌کنیم و با ویرگول به جمله‌ی اول می‌چسبانیم: Das ist der Beruf, der zu mir passt.">Das ist der Beruf, <mark>der</mark> zu mir <u>passt</u>.</p>
+      <div class="rules">
+        <div class="rule" data-s="4" data-say="Eins: Das Bezugswort bestimmt Genus und Numerus." data-fa="قانون ۱: واژه‌ای که به آن اشاره می‌کنیم (Bezugswort) جنس و تعداد ضمیر را تعیین می‌کند. der Beruf مذکر مفرد است، پس der."><span class="n">1</span><div><p>Das Bezugswort bestimmt <b>Genus + Numerus</b>.</p><p class="fa" dir="rtl" lang="fa">جنس و تعداد از اسمِ قبل از ویرگول می‌آید.</p></div></div>
+        <div class="rule" data-s="5" data-say="Zwei: Die Rolle im Nebensatz bestimmt den Kasus." data-fa="قانون ۲: نقش ضمیر در جمله‌ی فرعی حالت دستوری را تعیین می‌کند. اگر فاعل باشد Nominativ، اگر مفعول مستقیم باشد Akkusativ. در «der Beruf passt» شغل فاعل است، پس Nominativ."><span class="n">2</span><div><p>Die Rolle im Nebensatz bestimmt den <b>Kasus</b>: Subjekt → Nominativ, Objekt → Akkusativ.</p><p class="fa" dir="rtl" lang="fa">فاعل ← Nominativ، مفعول ← Akkusativ.</p></div></div>
+        <div class="rule" data-s="6" data-say="Drei: Komma, und das Verb steht am Ende." data-fa="قانون ۳: قبل از ضمیر ویرگول می‌گذاریم و فعل می‌رود آخر جمله‌ی فرعی: der zu mir passt."><span class="n">3</span><div><p><b>Komma</b> davor, und das <b>Verb am Ende</b>.</p><p class="fa" dir="rtl" lang="fa">ویرگول و فعل در آخر جمله.</p></div></div>
+      </div>
+    </section>
+
+    <!-- 4 Tabelle -->
+    <section class="scene" data-title="Nominativ &amp; Akkusativ" data-fa-title="Nominativ و Akkusativ" data-fa="جدول ضمیرهای موصولی را ردیف به ردیف ببین.">
+      <h2 class="lead">der · die · das · den</h2>
+      <div class="tbl">
+        <div class="hd">Bezugswort</div><div class="hd">Nominativ</div><div class="hd">Akkusativ</div>
+        <div class="row" data-s="1" data-say="Das ist der Beruf, der zu mir passt. Das ist der Beruf, den ich liebe." data-fa="مذکر: Nominativ می‌شود der (شغلی که به من می‌خورد) ولی Akkusativ می‌شود den (شغلی که دوستش دارم).">
+          <div class="cell lab"><span class="art der">der</span> Beruf<small>maskulin</small></div>
+          <div class="cell"><strong class="art der"><mark>der</mark></strong>zu mir passt.</div>
+          <div class="cell" id="denCell"><strong class="art der"><mark>den</mark></strong>ich liebe.</div>
+        </div>
+        <div class="row" data-s="2" data-say="Das ist das Buch, das so empfehlenswert ist. Das ist das Buch, das ich so gern gelesen habe." data-fa="خنثی: هر دو حالت می‌شود das. به آخر جمله‌ی دوم نگاه کن: gelesen habe، یعنی فعل کمکی هم آخر می‌رود.">
+          <div class="cell lab"><span class="art das">das</span> Buch<small>neutral</small></div>
+          <div class="cell"><strong class="art das"><mark>das</mark></strong>so empfehlenswert ist.</div>
+          <div class="cell"><strong class="art das"><mark>das</mark></strong>ich so gern gelesen habe.</div>
+        </div>
+        <div class="row" data-s="3" data-say="Das ist die Arbeit, die zu mir passt. Das ist die Arbeit, die ich liebe." data-fa="مؤنث: هر دو حالت می‌شود die.">
+          <div class="cell lab"><span class="art die">die</span> Arbeit<small>feminin</small></div>
+          <div class="cell"><strong class="art die"><mark>die</mark></strong>zu mir passt.</div>
+          <div class="cell"><strong class="art die"><mark>die</mark></strong>ich liebe.</div>
+        </div>
+        <div class="row" data-s="4" data-say="Das sind die Jobs, die zu uns passen. Das sind die Jobs, die ich machen könnte." data-fa="جمع: هر دو حالت die. دقت کن که فعل با جمع هماهنگ می‌شود: passen.">
+          <div class="cell lab"><span class="art die">die</span> Jobs<small>Plural</small></div>
+          <div class="cell"><strong class="art die"><mark>die</mark></strong>zu uns passen.</div>
+          <div class="cell"><strong class="art die"><mark>die</mark></strong>ich machen könnte.</div>
+        </div>
+      </div>
+      <div class="cmp">
+        <div data-s="5" data-say="Nur maskulin ändert sich: der wird zu den." data-fa="نکته‌ی مهم: فقط در مذکر Nominativ و Akkusativ فرق دارند: der ← den. در بقیه‌ی ردیف‌ها هیچ تغییری نیست.">Nur im Maskulin ändert sich etwas: <b class="art der">der</b> → <b class="art der">den</b>.</div>
+        <div data-s="6" data-fa="مقایسه با انگلیسی: در انگلیسی «that» یا «which» همیشه یکسان است، ولی در آلمانی ضمیر موصولی به جنس، تعداد و نقش جمله بستگی دارد.">Englisch: <i>the job that suits me · the job that I love</i> (immer „that“).<br>Deutsch: Genus, Numerus und Kasus entscheiden.</div>
+      </div>
+    </section>
+
+    <!-- 5 Zufriedenheit -->
+    <section class="scene" data-title="Zufriedenheit" data-fa-title="رضایت و نارضایتی" data-fa="سه پاسخ ممکن به این سؤال را یاد می‌گیریم.">
+      <h2 class="lead" data-s="1" data-say="Bist du mit deinem Job zufrieden?" data-fa="سؤال: آیا از شغلت راضی هستی؟ سه جواب ممکن است: راضی، تقریباً راضی و ناراضی.">Bist du mit deinem Job zufrieden?</h2>
+      <div class="cards3">
+        <div class="sat ok" data-s="2" data-say="Ja, ich bin sehr zufrieden damit. Mein Beruf macht mir großen Spaß." data-fa="راضی: بله، خیلی از آن راضی‌ام. شغلم برایم لذت زیادی دارد.">
+          <svg class="face" viewBox="0 0 48 48" aria-hidden="true"><circle cx="24" cy="24" r="21" fill="none" stroke="currentColor" stroke-width="3"/><circle cx="17" cy="19" r="2.4" fill="currentColor"/><circle cx="31" cy="19" r="2.4" fill="currentColor"/><path d="M14 29 Q24 39 34 29" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg>
+          <div><p>Ja, ich bin (sehr) zufrieden damit.</p><p>Mein Beruf macht mir großen Spaß.</p></div>
+        </div>
+        <div class="sat mid" data-s="3" data-say="Na ja, es geht. Der Job ist okay." data-fa="متوسط: «Na ja, es geht» یعنی بد نیست، ولی عالی هم نیست. کار خوب است ولی نه چندان.">
+          <svg class="face" viewBox="0 0 48 48" aria-hidden="true"><circle cx="24" cy="24" r="21" fill="none" stroke="currentColor" stroke-width="3"/><circle cx="17" cy="19" r="2.4" fill="currentColor"/><circle cx="31" cy="19" r="2.4" fill="currentColor"/><path d="M16 32 H32" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg>
+          <div><p>Na ja, es geht.</p><p>Der Job ist okay.</p></div>
+        </div>
+        <div class="sat bad" data-s="4" data-say="Nein, überhaupt nicht. Das ärgert mich. Deshalb möchte ich etwas ändern. Das habe ich fest vor." data-fa="ناراضی: نه، اصلاً. این مرا عصبانی می‌کند. برای همین می‌خواهم ... و این را جدی تصمیم گرفته‌ام (Das habe ich fest vor).">
+          <svg class="face" viewBox="0 0 48 48" aria-hidden="true"><circle cx="24" cy="24" r="21" fill="none" stroke="currentColor" stroke-width="3"/><circle cx="17" cy="19" r="2.4" fill="currentColor"/><circle cx="31" cy="19" r="2.4" fill="currentColor"/><path d="M14 35 Q24 25 34 35" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg>
+          <div><p>Nein, überhaupt nicht.</p><p>Ich habe keine Lust mehr. Das ärgert mich.</p><p>Deshalb möchte ich … Das habe ich fest vor.</p></div>
+        </div>
+      </div>
+      <div class="note" data-s="5" data-say="Ich bin mit meinem Job zufrieden. Ich bin damit zufrieden." data-fa="دستور زبان: zufrieden sein با mit می‌آید و بعد از mit همیشه Dativ داریم (mit meinem Job). اگر اسم را حذف کنیم، mit + das می‌شود damit.">
+        <p><b>zufrieden sein mit + Dativ</b>: Ich bin <mark>mit meinem Job</mark> zufrieden. → Ich bin <mark>damit</mark> zufrieden.</p>
+        <p class="fa" dir="rtl" lang="fa">mit همیشه Dativ می‌خواهد؛ «damit» یعنی «با آن / از آن».</p>
+      </div>
+    </section>
+
+    <!-- 6 Schulsystem -->
+    <section class="scene" data-title="Schulsystem" data-fa-title="نظام مدرسه‌ای آلمان" data-fa="از پایین شروع می‌کنیم، مثل پله‌های یک نردبان.">
+      <h2 class="lead">Das deutsche Schulsystem</h2>
+      <p class="sent" style="font-size:15px" data-s="1" data-say="In Deutschland hat jedes Bundesland ein eigenes Schulsystem." data-fa="در آلمان هر ایالت (Bundesland) نظام مدرسه‌ای خودش را دارد. این شکل فقط یک نسخه‌ی ساده است. از پایین بخوان.">In Deutschland hat jedes Bundesland ein eigenes Schulsystem. Hier: eine einfache Grafik.</p>
+      <div class="ladder">
+        <div class="step s-krippe" data-s="2" data-say="Die Krippe: null bis drei Jahre, freiwillig." data-fa="Krippe: مهدکودک برای ۰ تا ۳ سال، اختیاری (freiwillig)."><b>Krippe</b><span>0–3 Jahre · freiwillig</span></div>
+        <div class="step s-kiga" data-s="3" data-say="Der Kindergarten: drei bis sechs Jahre, freiwillig." data-fa="Kindergarten: کودکستان برای ۳ تا ۶ سال، آن هم اختیاری."><b>Kindergarten</b><span>3–6 Jahre · freiwillig</span></div>
+        <div class="step s-grund" data-s="4" data-say="Die Grundschule: Klasse eins bis vier." data-fa="Grundschule: دبستان، کلاس ۱ تا ۴. از اینجا به بعد مسیرها جدا می‌شوند."><b>Grundschule</b><span>Klasse 1–4</span></div>
+        <div class="tracks">
+          <div class="track t-ges" data-s="5" data-say="Die Gesamtschule. Hier sind mehrere Wege in einer Schule möglich." data-fa="Gesamtschule: مدرسه‌ی یکپارچه که چند مسیر را در یک مدرسه دارد (گاهی Sekundarschule یا Oberschule نامیده می‌شود). ممکن است تا Abitur ادامه یابد."><b>Gesamtschule</b><span class="kl">Klasse 5–13 (auch: Sekundarschule, Oberschule)</span><p class="go">→ Abitur möglich</p><p class="fa" dir="rtl" lang="fa">همه‌ی مسیرها در یک مدرسه</p></div>
+          <div class="track t-gym" data-s="6" data-say="Das Gymnasium führt zum Abitur und dann zur Universität." data-fa="Gymnasium: دبیرستان نظری. بعد از آن Abitur و سپس دانشگاه یا Fachhochschule."><b>Gymnasium</b><span class="kl">Klasse 5–12/13</span><p class="go">→ Abitur → Universität / Fachhochschule</p><p class="fa" dir="rtl" lang="fa">مسیر دانشگاه</p></div>
+          <div class="track" data-s="7" data-say="Die Realschule geht bis Klasse zehn. Danach: Lehre oder Fachoberschule." data-fa="Realschule: تا کلاس ۱۰. بعدش یا کارآموزی (Lehre با Berufsschule) یا Fachoberschule و بعد Fachhochschule."><b>Realschule</b><span class="kl">Klasse 5–10</span><p class="go">→ Lehre / Berufsschule / Berufskolleg oder Fachoberschule</p><p class="fa" dir="rtl" lang="fa">تا کلاس ۱۰</p></div>
+          <div class="track" data-s="8" data-say="Die Hauptschule oder Mittelschule führt oft zur Lehre." data-fa="Haupt-/Mittelschule: مسیر پایه که اغلب مستقیم به Lehre و Berufsschule می‌رسد."><b>Haupt-/ Mittelschule</b><span class="kl">Klasse 5–9/10</span><p class="go">→ Lehre / Berufsschule</p><p class="fa" dir="rtl" lang="fa">مسیر پایه، بعد کارآموزی</p></div>
+        </div>
+      </div>
+      <div class="who">
+        <div data-s="9" data-say="Ulla ist vierzehn und will Medizin studieren. Sie kann ein Gymnasium oder eine Gesamtschule besuchen. Sie muss das Abitur machen, dann kann sie auf die Universität." data-fa="مثال Ulla: چهارده ساله است و می‌خواهد پزشکی بخواند. او می‌تواند به Gymnasium یا Gesamtschule برود، باید Abitur بگیرد و بعد وارد دانشگاه شود."><b>Ulla, 14</b> will Medizin studieren → Gymnasium oder Gesamtschule → Abitur → Universität.</div>
+        <div data-s="10" data-say="Simon ist acht und möchte später als Schreiner arbeiten. Für ihn passt zum Beispiel die Hauptschule oder die Realschule, dann eine Lehre." data-fa="مثال Simon: هشت ساله است و دوست ندارد مدرسه برود؛ بعداً می‌خواهد نجار شود. مثلاً Haupt-/Mittelschule یا Realschule و بعد کارآموزی (Lehre) مناسب اوست."><b>Simon, 8</b> möchte später Schreiner werden → z. B. Haupt-/Mittelschule oder Realschule → Lehre + Berufsschule.</div>
+      </div>
+    </section>
+
+    <!-- 7 Quiz Relativpronomen -->
+    <section class="scene" data-quiz data-title="Quiz" data-fa-title="تمرین: ضمیر موصولی" data-fa="حالا نوبت توست. ضمیر درست را انتخاب کن؛ بعد از هر جواب دلیلش را می‌خوانی.">
+      <h2 class="lead">Welches Relativpronomen passt?</h2>
+      <div id="quizRel"></div>
+    </section>
+
+    <!-- 8 Quiz richtig/falsch -->
+    <section class="scene" data-quiz data-title="Richtig oder falsch?" data-fa-title="تمرین: درست یا غلط" data-fa="درباره‌ی متن Mark Brügge: هر جمله درست است یا غلط؟">
+      <h2 class="lead">Mark Brügge: richtig oder falsch?</h2>
+      <div id="quizRf"></div>
+    </section>
+
+  </main>
+
+  <div class="dock" id="dock">
+    <p class="cap fa" id="cap" dir="rtl" lang="fa" aria-live="polite"></p>
+    <div class="ctl">
+      <button class="ib" id="prev" type="button" aria-label="صحنه‌ی قبلی"><svg viewBox="0 0 24 24"><path d="M6 5h2v14H6zM20 5v14L9.5 12z"/></svg></button>
+      <button class="ib play" id="play" type="button" aria-label="پخش"><svg id="icoPlay" viewBox="0 0 24 24"><path d="M7 4l13 8-13 8z"/></svg></button>
+      <button class="ib" id="next" type="button" aria-label="صحنه‌ی بعدی"><svg viewBox="0 0 24 24"><path d="M16 5h2v14h-2zM4 5l10.5 7L4 19z"/></svg></button>
+      <span class="sp"></span>
+      <select class="speed" id="speed" aria-label="سرعت"><option value="0.8">0.8×</option><option value="1" selected>1×</option><option value="1.25">1.25×</option></select>
+      <button class="ib" id="snd" type="button" aria-pressed="true" aria-label="صدای آلمانی"><svg viewBox="0 0 24 24"><path d="M3 9v6h4l5 4V5L7 9zM15.5 8.5a5 5 0 0 1 0 7l-1.4-1.4a3 3 0 0 0 0-4.2zM18.4 5.6a9 9 0 0 1 0 12.8L17 17a7 7 0 0 0 0-10z"/></svg></button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  var root=document.documentElement; root.classList.add('js');
+  var scenes=[].slice.call(document.querySelectorAll('.scene'));
+  var capEl=document.getElementById('cap'), dock=document.getElementById('dock');
+  var playBtn=document.getElementById('play'), icoPlay=document.getElementById('icoPlay');
+  var sndBtn=document.getElementById('snd'), speedSel=document.getElementById('speed');
+  var dotsEl=document.getElementById('dots'), eyL=document.getElementById('eyL'), eyR=document.getElementById('eyR');
+  var reduced=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var cur=0, step=0, playing=false, tok=0, soundOn=true, speed=1;
+  var synth=('speechSynthesis' in window)?window.speechSynthesis:null, voice=null;
+  var PLAY='M7 4l13 8-13 8z', PAUSE='M6 4h4v16H6zM14 4h4v16h-4z';
+
+  function pickVoice(){
+    if(!synth) return; var vs=synth.getVoices()||[]; voice=null;
+    for(var i=0;i<vs.length;i++){ if(/^de/i.test(vs[i].lang)){ voice=vs[i]; if(/de[-_]DE/i.test(vs[i].lang)) break; } }
+  }
+  if(synth){ pickVoice(); if(synth.addEventListener) synth.addEventListener('voiceschanged',pickVoice); }
+  else { sndBtn.hidden=true; }
+
+  scenes.forEach(function(sc,i){
+    var m=0; sc.querySelectorAll('[data-s]').forEach(function(e){ m=Math.max(m,+e.dataset.s); });
+    sc._max=m;
+    var b=document.createElement('button'); b.type='button'; b.className='dot';
+    b.setAttribute('aria-label',(i+1)+'. '+sc.dataset.title);
+    b.addEventListener('click',function(){ go(i); });
+    dotsEl.appendChild(b);
+  });
+
+  function setCap(t){ capEl.textContent=t||''; }
+  function ensureVisible(el){
+    if(!el) return; var r=el.getBoundingClientRect(), lim=window.innerHeight-dock.offsetHeight-12;
+    var beh=reduced?'auto':'smooth';
+    if(r.top<0) window.scrollBy({top:r.top-12,behavior:beh});
+    else if(r.bottom>lim) window.scrollBy({top:r.bottom-lim+12,behavior:beh});
+  }
+  function updateDots(){
+    [].forEach.call(dotsEl.children,function(d,i){ d.classList.toggle('cur',i===cur); d.classList.toggle('seen',i<cur); });
+    eyL.textContent=(cur+1)+' / '+scenes.length+' · '+scenes[cur].dataset.title.replace(/&amp;/g,'&');
+    eyR.textContent=scenes[cur].dataset.faTitle||'';
+  }
+  function updateBtn(){
+    icoPlay.firstElementChild.setAttribute('d',playing?PAUSE:PLAY);
+    playBtn.setAttribute('aria-label',playing?'مکث':'پخش');
+  }
+  function reveal(sc,n){
+    step=n; var last=null, lastEl=null;
+    sc.querySelectorAll('[data-s]').forEach(function(e){
+      var s=+e.dataset.s;
+      e.classList.toggle('on',s<=n);
+      e.classList.remove('now');
+      if(playing&&s===n&&n>0){ void e.offsetWidth; e.classList.add('now'); lastEl=e; }
+      if(s<=n&&e.dataset.fa) last=e;
+    });
+    setCap(last?last.dataset.fa:(sc.dataset.fa||''));
+    if(lastEl) ensureVisible(lastEl);
+  }
+  function showScene(i){
+    cur=i; scenes.forEach(function(sc,k){ sc.hidden=(k!==i); }); updateDots();
+  }
+  function speak(text){
+    return new Promise(function(res){
+      if(!synth){ res(); return; }
+      synth.cancel();
+      var u=new SpeechSynthesisUtterance(text); u.lang='de-DE'; if(voice) u.voice=voice; u.rate=Math.min(1.4,0.85*speed);
+      var done=false, t; function fin(){ if(done) return; done=true; clearTimeout(t); res(); }
+      u.onend=fin; u.onerror=fin; t=setTimeout(fin,1500+text.length*140/speed);
+      synth.speak(u);
+    });
+  }
+  function wait(ms){ return new Promise(function(r){ setTimeout(r,ms/speed); }); }
+  function stop(){
+    playing=false; tok++; if(synth) synth.cancel(); updateBtn();
+    scenes[cur].querySelectorAll('.now').forEach(function(e){ e.classList.remove('now'); });
+  }
+  async function run(){
+    var my=++tok, sc=scenes[cur];
+    var n=(step>=sc._max)?1:Math.max(1,step);
+    if(step>=sc._max) reveal(sc,0);
+    while(playing&&my===tok){
+      sc=scenes[cur];
+      for(;n<=sc._max;n++){
+        if(!playing||my!==tok) return;
+        reveal(sc,n);
+        var say=[], fa='';
+        sc.querySelectorAll('[data-s="'+n+'"]').forEach(function(e){ if(e.dataset.say) say.push(e.dataset.say); if(e.dataset.fa) fa=e.dataset.fa; });
+        var read=wait(1500+fa.length*38);
+        if(soundOn&&synth&&say.length){ await Promise.all([speak(say.join(' ')),read]); } else { await read; }
+        if(my!==tok) return;
+        await wait(450);
+      }
+      if(my!==tok) return;
+      if(cur>=scenes.length-1){ stop(); return; }
+      await wait(700); if(my!==tok) return;
+      showScene(cur+1); sc=scenes[cur];
+      if(sc.hasAttribute('data-quiz')){ stop(); reveal(sc,sc._max); setCap(sc.dataset.fa); return; }
+      reveal(sc,0); n=1;
+    }
+  }
+  function start(){
+    if(scenes[cur].hasAttribute('data-quiz')){ showScene(cur>=scenes.length-1?0:cur+1); step=999; }
+    playing=true; updateBtn(); run();
+  }
+  function go(i){
+    i=Math.max(0,Math.min(scenes.length-1,i));
+    var was=playing; tok++; if(synth) synth.cancel();
+    showScene(i); var sc=scenes[i];
+    window.scrollTo({top:0,behavior:reduced?'auto':'smooth'});
+    if(was&&!sc.hasAttribute('data-quiz')){ playing=true; reveal(sc,0); updateBtn(); run(); }
+    else { playing=false; updateBtn(); reveal(sc,sc._max); }
+  }
+  playBtn.addEventListener('click',function(){ if(playing) stop(); else start(); });
+  document.getElementById('prev').addEventListener('click',function(){ go(cur-1); });
+  document.getElementById('next').addEventListener('click',function(){ go(cur+1); });
+  sndBtn.addEventListener('click',function(){ soundOn=!soundOn; sndBtn.setAttribute('aria-pressed',String(soundOn)); if(!soundOn&&synth) synth.cancel(); });
+  speedSel.addEventListener('change',function(){ speed=parseFloat(speedSel.value)||1; });
+  document.addEventListener('keydown',function(e){
+    var t=e.target&&e.target.tagName; if(t==='SELECT'||t==='INPUT') return;
+    if(e.key==='ArrowRight') go(cur+1); else if(e.key==='ArrowLeft') go(cur-1);
+  });
+  // tap any German sentence to hear it
+  [].forEach.call(document.querySelectorAll('[data-say]'),function(e){ e.tabIndex=0; e.setAttribute('role','button'); });
+  function hear(e){
+    var el=e.target.closest&&e.target.closest('[data-say]'); if(!el||!synth||playing) return;
+    if(e.type==='keydown'&&e.key!=='Enter'&&e.key!==' ') return;
+    if(e.type==='keydown') e.preventDefault();
+    speak(el.dataset.say);
+  }
+  document.addEventListener('click',hear); document.addEventListener('keydown',hear);
+
+  // ---------- quizzes ----------
+  var REL=[
+    {q:['Das ist der Beruf, ',' zu mir passt.'],a:'der',why:'Beruf ist maskulin. Im Nebensatz ist „der Beruf“ das Subjekt (er passt) → Nominativ → der. / شغل مذکر و فاعل است، پس Nominativ و der.'},
+    {q:['Das ist der Kollege, ',' ich gut kenne.'],a:'den',why:'Kollege ist maskulin, aber hier das Objekt (ich kenne ihn) → Akkusativ → den. / مذکر + مفعول = den. تنها حالتی که تغییر می‌کند.'},
+    {q:['Das ist das Buch, ',' ich so gern gelesen habe.'],a:'das',why:'Buch ist neutral. Objekt → Akkusativ. Bei neutral sind Nominativ und Akkusativ gleich → das. / خنثی در هر دو حالت das است.'},
+    {q:['Das ist die Arbeit, ',' zu mir passt.'],a:'die',why:'Arbeit ist feminin, Subjekt → Nominativ → die. / مؤنث همیشه die.'},
+    {q:['Das sind die Jobs, ',' ich machen könnte.'],a:'die',why:'Jobs ist Plural. Im Plural ist es immer die (Nominativ und Akkusativ). / جمع همیشه die.'}
+  ];
+  var RF=[
+    {q:'Nach dem Abitur hat Mark Brügge ein Semester Medizin studiert.',a:true,why:'Richtig: Er hat nach einem Semester wieder aufgehört. / درست است: بعد از یک ترم رها کرد.'},
+    {q:'Danach hat er eine Lehre als Elektroinstallateur abgeschlossen.',a:false,why:'Falsch: Er hat die Lehre nur begonnen und ist nach drei Monaten zurück an die Uni. / غلط: فقط شروع کرد و بعد از سه ماه برگشت.'},
+    {q:'Das Jurastudium hat ihm besonders gut gefallen.',a:false,why:'Falsch: Jura war nicht sein Ding. / غلط: حقوق «کار او» نبود.'},
+    {q:'Mark Brügge hat auch ein paar Jahre als Schreiner gearbeitet.',a:false,why:'Falsch: Er hat nur einen alten Schreiner getroffen. / غلط: فقط یک نجار پیر را ملاقات کرد.'},
+    {q:'Heute ist er Landschaftsgärtner und liebt seine Arbeit.',a:true,why:'Richtig: Er ist schon lange ein zufriedener Landschaftsgärtner. / درست است.'},
+    {q:'Das Buch soll jungen Menschen bei der Berufswahl helfen.',a:true,why:'Richtig: Es gibt Tipps zur Berufswahl und zur Ausbildung. / درست است.'}
+  ];
+  function el(tag,cls,txt){ var e=document.createElement(tag); if(cls) e.className=cls; if(txt!=null) e.textContent=txt; return e; }
+  function buildQuiz(host,items,kind){
+    host.textContent=''; var score=0, answered=0;
+    var sc=el('p','score',''); host.appendChild(sc);
+    function upd(){ sc.textContent=answered===items.length?('Ergebnis: '+score+' / '+items.length):(answered+' / '+items.length+' beantwortet'); }
+    items.forEach(function(it){
+      var card=el('div','qcard'), p=el('p','qtxt'), blank=null;
+      if(kind==='rel'){ p.appendChild(document.createTextNode(it.q[0])); blank=el('span','blank','   '); p.appendChild(blank); p.appendChild(document.createTextNode(it.q[1])); }
+      else p.textContent=it.q;
+      card.appendChild(p);
+      var opts=el('div','opts'), why=el('p','why'); why.hidden=true; why.className='why fa'; why.dir='rtl'; why.lang='fa';
+      var list=kind==='rel'?['der','den','die','das']:[true,false], btns=[];
+      list.forEach(function(v){
+        var label=kind==='rel'?v:(v?'richtig':'falsch'); var b=el('button','opt',label); b.type='button'; btns.push(b);
+        b.addEventListener('click',function(){
+          var ok=(v===it.a); btns.forEach(function(x,i){ x.disabled=true; if(list[i]===it.a) x.classList.add('right'); });
+          if(!ok) b.classList.add('wrong');
+          if(blank){ blank.textContent=it.a; blank.classList.add('done'); }
+          why.textContent=(ok?'✓ ':'✗ ')+it.why; why.hidden=false;
+          answered++; if(ok) score++; upd();
+        });
+        opts.appendChild(b);
+      });
+      card.appendChild(opts); card.appendChild(why); host.appendChild(card);
+    });
+    var r=el('button','reset','Nochmal'); r.type='button'; r.addEventListener('click',function(){ buildQuiz(host,items,kind); });
+    host.appendChild(r); upd();
+  }
+  buildQuiz(document.getElementById('quizRel'),REL,'rel');
+  buildQuiz(document.getElementById('quizRf'),RF,'rf');
+
+  // first frame: scene 1 fully visible (paused)
+  showScene(0); updateBtn(); reveal(scenes[0],scenes[0]._max); setCap(scenes[0].dataset.fa);
+})();
+</script>
+
+</body></html>
