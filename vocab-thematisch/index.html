@@ -415,10 +415,10 @@ function loadVoices(){
 }
 function voiceByURI(u){for(var i=0;i<A.voices.length;i++)if(A.voices[i].voiceURI===u)return A.voices[i];return null}
 function bestGerman(){
-  var pri=['de-DE','de-AT','de-CH'];
-  for(var p=0;p<pri.length;p++)for(var i=0;i<A.voices.length;i++)if(A.voices[i].lang.replace('_','-')===pri[p])return A.voices[i];
-  for(var j=0;j<A.voices.length;j++)if(/^de/i.test(A.voices[j].lang))return A.voices[j];
-  return null;
+  var sc=function(v){var n=v.name||'';return (/natural|neural|online|multilingual/i.test(n)?100:0)+(/premium|enhanced/i.test(n)?60:0)+(/google/i.test(n)?40:0)+(/anna|petra|markus|katja|conrad|amala|killian|yannick|helena/i.test(n)?20:0)+(/^de[-_]DE$/i.test(v.lang)?10:0)+(v.localService?0:5)};
+  var de=A.voices.filter(function(v){return /^de([-_]|$)/i.test(v.lang)});
+  de.sort(function(a,b){return sc(b)-sc(a)});
+  return de[0]||null;
 }
 var cur=null;
 function speak(text,el,kind){

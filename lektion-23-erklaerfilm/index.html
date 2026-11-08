@@ -383,7 +383,7 @@ select.speed{height:44px;border-radius:999px;border:1.5px solid var(--line);back
 
   function pickVoice(){
     if(!synth) return; var vs=synth.getVoices()||[]; voice=null;
-    for(var i=0;i<vs.length;i++){ if(/^de/i.test(vs[i].lang)){ voice=vs[i]; if(/de[-_]DE/i.test(vs[i].lang)) break; } }
+    var best=-1;for(var i=0;i<vs.length;i++){ if(/^de/i.test(vs[i].lang)){ var n=vs[i].name||'',sc=(/natural|neural|online|multilingual/i.test(n)?100:0)+(/premium|enhanced/i.test(n)?60:0)+(/google/i.test(n)?40:0)+(/anna|petra|markus|katja|conrad|amala|killian|yannick|helena/i.test(n)?20:0)+(/de[-_]DE/i.test(vs[i].lang)?10:0)+(vs[i].localService?0:5); if(sc>best){best=sc;voice=vs[i];} } }
   }
   if(synth){ pickVoice(); if(synth.addEventListener) synth.addEventListener('voiceschanged',pickVoice); }
   else { sndBtn.hidden=true; }
