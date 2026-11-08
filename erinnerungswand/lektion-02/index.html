@@ -1356,6 +1356,7 @@ var KEY_MEM='menschen_b1_1_L2_mem_v1', KEY_MEMAUTO='menschen_b1_1_L2_memauto';
 var LNUM=(META&&META.n)||0;
 var MEM={items:[],on:[]};
 (function(){try{var a=JSON.parse(lsGet(KEY_MEM,'[]'));if(Array.isArray(a))MEM.items=a.filter(function(x){return x&&x.k&&x.de;});}catch(e){}})();
+/*mem-seed:start*/(function(){try{if(lsGet(KEY_MEM+'_seeded','')==='1')return;var S=[{"k": "x19qfh6s", "t": "s", "de": "Nach dem langen Tag war ich todmüde.", "fa": "بعد از آن روزِ طولانی مرده از خستگی بودم.", "en": "", "say": "Nach dem langen Tag war ich todmüde.", "src": "Sprechtraining", "gid": "", "ts": 1792705456970, "st": 0, "note": "", "r": 0, "u": 1792705456971}],have={};MEM.items.forEach(function(x){have[x.k]=1});S.forEach(function(it){if(!have[it.k])MEM.items.push(it)});MEM.items.sort(function(a,b){return (b.ts||0)-(a.ts||0)});lsSet(KEY_MEM,JSON.stringify(MEM.items));lsSet(KEY_MEM+'_seeded','1')}catch(e){}})();/*mem-seed:end*/
 function memSave(){syncDiff();lsSet(KEY_MEM,JSON.stringify(MEM.items));MEM.on.forEach(function(f){try{f();}catch(e){}});}
 /* ---- همگام‌سازی بین دستگاه‌ها (فقط وقتی جزوه از لینک Artifact باز شود؛ هر مورد یک سند در پایگاه‌دادهٔ خصوصیِ خودِ کاربر) ---- */
 var SY={col:null,ready:false,sig:{},q:{},timer:null,busy:false,state:'off',err:0};
