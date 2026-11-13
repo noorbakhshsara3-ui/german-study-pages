@@ -2689,6 +2689,52 @@ function initHoeren(){
   var MAXPL=2;
 
   /* ----- audio core ----- */
+
+  /* ----- Web-Audio engine: used when the viewer (e.g. Claude's preview) blocks data:/blob: media via CSP.
+     It replaces the media-element internals of the same Audio object so all player code keeps working. ----- */
+  function webFallback(st,a,p){
+    if(p.web||HD.mode!=='embed')return false;
+    var d;try{if(!AUDIO)AUDIO=JSON.parse($('#l7audio').textContent);d=AUDIO[st.audio];}catch(e){d='';}
+    if(!d)return false;
+    var AC=window.AudioContext||window.webkitAudioContext;if(!AC)return false;
+    p.web=true;
+    var c=new AC(),buf=null,node=null,off=0,t0=0,rate=1,playing=false,ended=false,fired=false;
+    function pos(){if(!buf)return off;var t=playing?off+(c.currentTime-t0)*rate:off;return Math.max(0,Math.min(buf.duration,t));}
+    function ev(n){try{a.dispatchEvent(new Event(n));}catch(e){}}
+    function stopNode(){if(node){node.onended=null;try{node.stop();}catch(e){}try{node.disconnect();}catch(e){}node=null;}}
+    function startNode(){
+      stopNode();if(!buf)return;
+      if(off>=buf.duration-0.01)off=0;
+      node=c.createBufferSource();node.buffer=buf;node.playbackRate.value=rate;node.connect(c.destination);
+      var me=node;node.onended=function(){if(node!==me)return;node=null;if(!playing)return;off=buf.duration;playing=false;ended=true;ev('ended');ev('pause');};
+      t0=c.currentTime;ended=false;node.start(0,off);
+    }
+    var ready=new Promise(function(res,rej){
+      var ab=b64buf(d);
+      function ok(b){buf=b;if(!fired){fired=true;ev('loadedmetadata');}res();}
+      try{var pr_=c.decodeAudioData(ab,ok,rej);if(pr_&&pr_.then)pr_.then(ok,rej);}catch(e){rej(e);}
+    });
+    ready.catch(function(){toast('⚠️ پخش صدا در این نمایشگر ممکن نشد. فایل HTML را دانلود کن و مستقیم در Chrome یا Safari باز کن.');});
+    function def(k,g,sx){var o={configurable:true,get:g};if(sx)o.set=sx;Object.defineProperty(a,k,o);}
+    def('currentTime',pos,function(v){v=Number(v)||0;if(playing){off=v;startNode();}else off=Math.max(0,v);});
+    def('duration',function(){return buf?buf.duration:NaN;});
+    def('paused',function(){return !playing;});
+    def('ended',function(){return ended;});
+    def('readyState',function(){return buf?4:0;});
+    def('playbackRate',function(){return rate;},function(v){v=Math.max(0.25,Math.min(2,Number(v)||1));if(v===rate)return;if(playing){off=pos();t0=c.currentTime;}rate=v;if(node)node.playbackRate.value=v;});
+    a.load=function(){};
+    a.play=function(){
+      try{if(c.state==='suspended')c.resume();}catch(e){}
+      return ready.then(function(){
+        if(playing)return;
+        playing=true;startNode();ev('play');
+      });
+    };
+    a.pause=function(){if(!playing)return;off=pos();playing=false;stopNode();ev('pause');};
+    /* tell the UI the engine is ready (duration display) */
+    ready.then(function(){ui(st);},function(){});
+    return true;
+  }
   function getAu(st){
     var p=pr(st.id);
     if(!p.au){
@@ -2708,6 +2754,7 @@ function initHoeren(){
           a.addEventListener('loadedmetadata',function once(){a.removeEventListener('loadedmetadata',once);try{if(t)a.currentTime=t;}catch(e){}if(wasPlaying){var q=a.play();if(q&&q.catch)q.catch(function(){});}});
           return;
         }
+        if(webFallback(st,a,p)){if(p.wantPlay){var q=a.play();if(q&&q.catch)q.catch(function(){});}return;}
         var c=a.error?a.error.code:0;
         toast('⚠️ مرورگر نتوانست فایل صوتی را پخش کند (کد '+c+'). راه‌حل: فایل HTML دانلودشده را مستقیم در Chrome باز کن (دو بار کلیک)، نه داخل پیش‌نمایش.');
       });
@@ -2750,6 +2797,11 @@ function initHoeren(){
       a.playbackRate=1;
     }else a.playbackRate=p.rate;
     var pm=a.play();if(pm&&pm.catch)pm.catch(function(e){if(e&&e.name==='NotSupportedError')return;toast('⚠️ مرورگر پخش را نپذیرفت؛ یک بار دیگر روی ▶ بزن.');});
+    watchdog(st,a,p);
+  }
+  /* some viewers never fire an error for blocked media: if nothing loaded after 2.5 s, switch to the Web-Audio engine */
+  function watchdog(st,a,p){
+    if(p.web||p.wd)return;p.wd=setTimeout(function(){p.wd=0;if(!p.web&&a.readyState===0&&p.wantPlay){if(webFallback(st,a,p)){var q=a.play();if(q&&q.catch)q.catch(function(){});}}},2500);
   }
   function playSeg(st,i,opt){
     opt=opt||{};
