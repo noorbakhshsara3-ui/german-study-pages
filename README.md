@@ -6,7 +6,7 @@ root `index.html` for the overview, or any `index.html` inside a folder.
 - `deutsch-b2-hossein/` – Deutsch B2 study plan app, with the progress saved so far (study minutes, cards, weak points, lesson notes) as the starting data
 - `menschen-a1-2/` – Menschen A1.2 lesson collection (lessons 13–24)
 - `vocab-thematisch/` – thematic vocabulary
-- `erinnerungswand/` – Menschen B1.1 lessons 2–14: `Menschen_B1-1_Alle_Lektionen_2-14.html` is the combined hub with all lessons (`index.html` redirects to it); each lesson is also in `lektion-02 … 14/`
+- `erinnerungswand/` – Menschen B1.1 lessons 2–14: `Menschen_B1-1_Alle_Lektionen_2-14.html` is the combined hub with all lessons (`index.html` redirects to it); each lesson is also in `lektion-02 … 14/`. Lesson 7 has the 🎧 Hören tab (audio in `lektion-07/audio/` and `audio/`, shared by the hub)
 - `lektion-23-erklaerfilm/` – Lektion 23 explainer
 
 Progress is saved in the browser. Use the round 💾 button (bottom-left) to save
