@@ -2567,12 +2567,28 @@ function initHoeren(){
   var HD=DATA.hoeren;if(!HD)return;
   var ST={};HD.stations.forEach(function(s){ST[s.id]=s;});
   var AUDIO=null;
-  function audioSrc(st){
+  /* candidate sources, tried in order when the browser/viewer refuses one (CSP on data:/blob:, file://, etc.) */
+  var BLOBS={};
+  function dataToBlobUrl(d){
+    try{
+      var i=d.indexOf(','),mime=(d.slice(5,i).split(';')[0])||'audio/mpeg',bin=atob(d.slice(i+1)),n=bin.length,u=new Uint8Array(n);
+      for(var k=0;k<n;k++)u[k]=bin.charCodeAt(k);
+      return URL.createObjectURL(new Blob([u],{type:mime}));
+    }catch(e){return '';}
+  }
+  function audioSrcs(st){
+    var out=[];
+    if(HD.urls&&HD.urls[st.audio])out.push(HD.urls[st.audio]);
     if(HD.mode==='embed'){
       if(!AUDIO){try{AUDIO=JSON.parse($('#l7audio').textContent);}catch(e){AUDIO={};}}
-      return AUDIO[st.audio]||'';
-    }
-    return HD.base+st.audio+'.mp3';
+      var d=AUDIO[st.audio]||'';
+      if(d){
+        if(BLOBS[st.audio]===undefined)BLOBS[st.audio]=dataToBlobUrl(d);
+        if(BLOBS[st.audio])out.push(BLOBS[st.audio]);
+        out.push(d);
+      }
+    }else if(HD.mode==='relative'){out.push(HD.base+st.audio+'.mp3');}
+    return out;
   }
   /* ----- storage ----- */
   var S={v:1,st:{}};
@@ -2596,14 +2612,25 @@ function initHoeren(){
   function getAu(st){
     var p=pr(st.id);
     if(!p.au){
-      var a=new Audio();a.preload='none';
+      var a=new Audio();a.preload='auto';
       try{a.preservesPitch=true;}catch(e){}try{a.webkitPreservesPitch=true;}catch(e){}try{a.mozPreservesPitch=true;}catch(e){}
-      a.src=audioSrc(st);
+      var srcs=audioSrcs(st),si=0;
+      p.srcs=srcs;
+      if(srcs.length)a.src=srcs[0];
       a.addEventListener('loadedmetadata',function(){ui(st);});
       a.addEventListener('ended',function(){count(st,true);p.seg=null;ui(st);});
-      a.addEventListener('pause',function(){stopRaf(p);ui(st);});
+      a.addEventListener('pause',function(){p.wantPlay=false;stopRaf(p);ui(st);});
       a.addEventListener('play',function(){startRaf(st);ui(st);});
-      a.addEventListener('error',function(){toast('⚠️ فایل صوتی بارگذاری نشد. اگر نسخهٔ آنلاین است اینترنت را بررسی کن.');});
+      a.addEventListener('error',function(){
+        if(si+1<srcs.length){ /* try the next source and resume where we were */
+          si++;var t=a.currentTime||0,wasPlaying=p.wantPlay;
+          a.src=srcs[si];try{a.load();}catch(e){}
+          a.addEventListener('loadedmetadata',function once(){a.removeEventListener('loadedmetadata',once);try{if(t)a.currentTime=t;}catch(e){}if(wasPlaying){var q=a.play();if(q&&q.catch)q.catch(function(){});}});
+          return;
+        }
+        var c=a.error?a.error.code:0;
+        toast('⚠️ مرورگر نتوانست فایل صوتی را پخش کند (کد '+c+'). راه‌حل: فایل HTML دانلودشده را مستقیم در Chrome باز کن (دو بار کلیک)، نه داخل پیش‌نمایش.');
+      });
       p.au=a;
     }
     return p.au;
@@ -2634,7 +2661,7 @@ function initHoeren(){
   function stopRaf(p){if(p.raf){cancelAnimationFrame(p.raf);p.raf=0;}}
   function limited(st){return pr(st.id).mode==='pr';}
   function play(st){
-    var p=pr(st.id),a=getAu(st);pauseOthers(st.id);
+    var p=pr(st.id),a=getAu(st);pauseOthers(st.id);p.wantPlay=true;
     if(limited(st)){
       if(a.currentTime<1||a.ended){
         if(p.plays>=MAXPL){toast('در حالت امتحان فقط '+fa(MAXPL)+' بار می‌توانی کل فایل را بشنوی.');return;}
@@ -2642,13 +2669,13 @@ function initHoeren(){
       }
       a.playbackRate=1;
     }else a.playbackRate=p.rate;
-    var pm=a.play();if(pm&&pm.catch)pm.catch(function(){toast('⚠️ مرورگر پخش را نپذیرفت؛ یک بار دیگر روی ▶ بزن.');});
+    var pm=a.play();if(pm&&pm.catch)pm.catch(function(e){if(e&&e.name==='NotSupportedError')return;toast('⚠️ مرورگر پخش را نپذیرفت؛ یک بار دیگر روی ▶ بزن.');});
   }
   function playSeg(st,i,opt){
     opt=opt||{};
     var p=pr(st.id),a=getAu(st),r=segOf(st,i);
     if(limited(st)&&!opt.force){toast('در حالت امتحان پخش جمله‌به‌جمله بسته است.');return;}
-    pauseOthers(st.id);
+    pauseOthers(st.id);p.wantPlay=true;
     p.loop=null;p.seg={start:r[0],end:r[1],rep:!!opt.rep,cb:opt.cb||null};p.cur=i;
     function go(){
       a.currentTime=r[0];a.playbackRate=opt.rate||p.rate;
