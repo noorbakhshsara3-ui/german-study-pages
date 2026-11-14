@@ -2676,8 +2676,14 @@ function initHoeren(){
   var S={v:1,st:{}};
   try{var raw=JSON.parse(lsGet(KEY_HOER,'null'));if(raw&&raw.st)S=raw;}catch(e){}
   function hs(id){var o=S.st[id];if(!o){o=S.st[id]={q:{},listens:0,dikt:{},shadow:0,sum:0,speak:{},open:{},last:0};}return o;}
-  function hsave(id){if(id)hs(id).last=Date.now();lsSet(KEY_HOER,JSON.stringify(S));}
+  var CL={on:false,col:null,q:{},timer:0,tu:parseInt(lsGet(KEY_HTIME+'_u','0'),10)||0,su:parseInt(lsGet(KEY_HOER+'_u','0'),10)||0};
+  function clPush(){if(!CL.on||CL.timer)return;CL.timer=setTimeout(function(){CL.timer=0;try{
+    if(CL.q.t){CL.col.doc('times').set({j:JSON.stringify(TM),u:CL.tu});CL.q.t=0;}
+    if(CL.q.s){CL.col.doc('prog').set({j:JSON.stringify(S),u:CL.su});CL.q.s=0;}
+  }catch(e){}},1200);}
+  function hsave(id){if(id)hs(id).last=Date.now();lsSet(KEY_HOER,JSON.stringify(S));CL.su=Date.now();lsSet(KEY_HOER+'_u',String(CL.su));CL.q.s=1;clPush();}
   var TM={};try{TM=JSON.parse(lsGet(KEY_HTIME,'{}'))||{};}catch(e){TM={};}
+  function saveTM(){lsSet(KEY_HTIME,JSON.stringify(TM));CL.tu=Date.now();lsSet(KEY_HTIME+'_u',String(CL.tu));CL.q.t=1;clPush();}
   function seg(st,i){var o=TM[st.id];if(o&&o[i])return o[i];var s=st.sents[i];return [s.a,s.b];}
   function nsegs(st){return st.sents.length?st.sents.length:(st.segs||[]).length;}
   function segOf(st,i){if(st.sents.length)return seg(st,i);var g=st.segs[i];return [g.a,g.b];}
@@ -3417,6 +3423,7 @@ function initHoeren(){
     h+='<div class="hbox"><h3>🗓 برنامهٔ ۷ روزه</h3><p class="hint">بعد از هر روز تیک بزن. اگر روز آسان بود سرعت را به ۱ یا ۱٫۱ ببر؛ اگر سخت بود روی ۰٫۸۵ بمان.</p>';
     PLAN.forEach(function(p,i){h+='<label class="hplan"><input type="checkbox" data-hplan="'+i+'"'+(pl[i]?' checked':'')+'> <b>'+p[0]+'</b> — '+esc(p[1])+'</label>';});
     h+='</div>';
+    h+='<div class="hbox hbk"><h3>⏱ پشتیبانِ زمان‌بندیِ جمله‌ها</h3><p class="hint">اگر زمان‌بندی را با تپ‌سینک درست کرده‌ای، این دکمه همهٔ ایستگاه‌های این درس را یک‌جا کپی می‌کند؛ متن را برای من بفرست تا برای همیشه داخل خودِ فایل‌ها (هاب و GitHub) گذاشته شود. «وارد کردن» همان متن را در هر مرورگر دیگر برمی‌گرداند.</p><div class="hq-act"><button class="chipbtn" type="button" data-hexpall="1">📋 کپی زمان‌بندی همهٔ ایستگاه‌ها</button><button class="chipbtn" type="button" data-himpall="1">📥 وارد کردن</button></div><textarea class="hio hioall" rows="3" dir="ltr" spellcheck="false" placeholder="JSON همهٔ ایستگاه‌ها …" hidden></textarea></div>';
     /* legend */
     h+='<div class="hbox"><h3>ℹ️ این بخش چطور کار می‌کند</h3><ul class="hlist">'+
       '<li><b>هر Track = یک ایستگاه</b> با چهار مرحله: A آماده‌سازی، B شنیدن کلی، C شنیدن دقیق، D بعد از شنیدن (املا، Shadowing، ضبط، خلاصه، گفتار).</li>'+
@@ -3521,15 +3528,18 @@ function initHoeren(){
     }
     if((b=t.closest('[data-hsmp]'))){var pp=b.getAttribute('data-hsmp').split(':'),s4=ST[pp[0]],k2=parseInt(pp[1],10);var out=b.closest('.hsp').querySelector('.hsp-s');out.hidden=!out.hidden;hs(s4.id).speak[k2]=Date.now();hsave(s4.id);renderOver();return;}
     if((b=t.closest('[data-htap]'))&&st){tapDo(st,b.getAttribute('data-htap'),rootEl);return;}
-    if((b=t.closest('[data-hshift]'))&&st){var dv=parseFloat(b.getAttribute('data-hshift'));var o4=TM[st.id];if(!o4)o4=TM[st.id]=st.sents.map(function(x){return [x.a,x.b];});o4.forEach(function(r){r[0]=Math.max(0,Math.round((r[0]+dv)*100)/100);r[1]=Math.max(r[0]+0.1,Math.round((r[1]+dv)*100)/100);});lsSet(KEY_HTIME,JSON.stringify(TM));refreshTr(st);toast('همهٔ مرزها '+(dv>0?'+':'')+dv+' ثانیه جابه‌جا شد.');return;}
+    if((b=t.closest('[data-hshift]'))&&st){var dv=parseFloat(b.getAttribute('data-hshift'));var o4=TM[st.id];if(!o4)o4=TM[st.id]=st.sents.map(function(x){return [x.a,x.b];});o4.forEach(function(r){r[0]=Math.max(0,Math.round((r[0]+dv)*100)/100);r[1]=Math.max(r[0]+0.1,Math.round((r[1]+dv)*100)/100);});saveTM();refreshTr(st);toast('همهٔ مرزها '+(dv>0?'+':'')+dv+' ثانیه جابه‌جا شد.');return;}
     if((b=t.closest('[data-hnow]'))&&st){
       var i3=parseInt(b.getAttribute('data-hi'),10),au=getAu(st),row=b.closest('.he-r'),tt=Math.round(au.currentTime*100)/100;
       $(b.getAttribute('data-hnow')==='a'?'.he-a':'.he-b',row).value=tt;saveTimes(st,row,i3);return;
     }
+    if((b=t.closest('[data-hexpall]'))){var all={};HD.stations.forEach(function(x){if(x.sents.length)all[x.id]=x.sents.map(function(y,i){return seg(x,i);});});var tb=b.closest('.hbk').querySelector('.hioall');tb.hidden=false;tb.value=JSON.stringify({lesson:HD.n||7,times:all});tb.select();try{D.execCommand('copy');toast('کپی شد.');}catch(er){toast('متن را دستی کپی کن.');}return;}
+    if((b=t.closest('[data-himpall]'))){var tb2=b.closest('.hbk').querySelector('.hioall');if(tb2.hidden){tb2.hidden=false;tb2.value='';tb2.focus();toast('JSON را بچسبان و دوباره «وارد کردن» را بزن.');return;}
+      try{var jo=JSON.parse(tb2.value),tt2=jo.times||jo,cnt=0;HD.stations.forEach(function(x){var a=tt2[x.id];if(Array.isArray(a)&&a.length===x.sents.length){TM[x.id]=a;cnt++;}});if(!cnt)throw 1;saveTM();HD.stations.forEach(function(x){try{refreshTr(x);}catch(e){}});toast('زمان‌بندیِ '+fa(cnt)+' ایستگاه وارد شد.');}catch(er){toast('JSON معتبر نیست.');}return;}
     if((b=t.closest('[data-hexp]'))){var s5=ST[b.getAttribute('data-hexp')],arr=s5.sents.map(function(x,i){return seg(s5,i);});var js=JSON.stringify(arr);var ta=b.closest('.hedit').querySelector('.hio');ta.hidden=false;ta.value=js;ta.select();try{D.execCommand('copy');toast('کپی شد.');}catch(er){toast('متن را دستی کپی کن.');}return;}
     if((b=t.closest('[data-himp]'))){var s6=ST[b.getAttribute('data-himp')],ta2=b.closest('.hedit').querySelector('.hio');if(ta2.hidden){ta2.hidden=false;ta2.value='';ta2.focus();toast('JSON را بچسبان و دوباره «وارد کردن» را بزن.');return;}
-      try{var ar=JSON.parse(ta2.value);if(!Array.isArray(ar)||ar.length!==s6.sents.length)throw 1;TM[s6.id]=ar;lsSet(KEY_HTIME,JSON.stringify(TM));refreshTr(s6);toast('زمان‌بندی وارد شد.');}catch(er){toast('JSON معتبر نیست (باید '+fa(s6.sents.length)+' جفت باشد).');}return;}
-    if((b=t.closest('[data-hrst]'))){var s7=ST[b.getAttribute('data-hrst')];delete TM[s7.id];lsSet(KEY_HTIME,JSON.stringify(TM));refreshTr(s7);toast('زمان‌بندی پیش‌فرض برگشت.');return;}
+      try{var ar=JSON.parse(ta2.value);if(!Array.isArray(ar)||ar.length!==s6.sents.length)throw 1;TM[s6.id]=ar;saveTM();refreshTr(s6);toast('زمان‌بندی وارد شد.');}catch(er){toast('JSON معتبر نیست (باید '+fa(s6.sents.length)+' جفت باشد).');}return;}
+    if((b=t.closest('[data-hrst]'))){var s7=ST[b.getAttribute('data-hrst')];delete TM[s7.id];saveTM();refreshTr(s7);toast('زمان‌بندی پیش‌فرض برگشت.');return;}
   });
   /* ----- tap-sync ----- */
   var TAP=null;
@@ -3562,7 +3572,7 @@ function initHoeren(){
       if(k2>0){var pv=o[k2-1];if(pv[1]>t-0.04)pv[1]=Math.max(pv[0]+0.1,Math.round((t-0.05)*100)/100);}
       /* ends of this sentence must not run into the next start */
       if(k2+1<o.length&&o[k2][1]>o[k2+1][0]&&o[k2+1][0]>t)o[k2][1]=Math.round((o[k2+1][0]-0.05)*100)/100;
-      lsSet(KEY_HTIME,JSON.stringify(TM));
+      saveTM();
       TAP.k++;tapShow(st,root);
       if(TAP.k>=st.sents.length){au.pause();toast('همگام‌سازی کامل شد ✓');TAP=null;refreshTr(st);}
     }
@@ -3574,7 +3584,7 @@ function initHoeren(){
   function saveTimes(st,row,i){
     var a=parseFloat($('.he-a',row).value),b=parseFloat($('.he-b',row).value);if(!(a>=0&&b>a)){toast('شروع باید کمتر از پایان باشد.');return;}
     var o=TM[st.id];if(!o){o=TM[st.id]=st.sents.map(function(x){return [x.a,x.b];});}
-    o[i]=[a,b];lsSet(KEY_HTIME,JSON.stringify(TM));
+    o[i]=[a,b];saveTM();
   }
   host.addEventListener('change',function(e){
     var t=e.target,rootEl=t.closest&&t.closest('.hst'),st=rootEl?ST[rootEl.id.replace('h-','')]:null;
@@ -3593,6 +3603,31 @@ function initHoeren(){
   });
   window.addEventListener('pagehide',function(){micRel();for(var k in PR){if(PR[k].au)PR[k].au.pause();}});
   MEM.on.push(renderOver);
+  /* ----- cloud sync (artifact db): times + progress survive new links, other devices, republish ----- */
+  function clApply(qs){
+    var redo=false;
+    qs.docChanges().forEach(function(c){
+      if(c.type==='removed')return;var d=c.doc.data();if(!d||!d.j)return;var u=d.u||0,o;
+      try{o=JSON.parse(d.j);}catch(e){return;}
+      if(c.doc.id==='times'){if(u>CL.tu){TM=o||{};CL.tu=u;lsSet(KEY_HTIME,JSON.stringify(TM));lsSet(KEY_HTIME+'_u',String(u));redo=true;}}
+      else if(c.doc.id==='prog'){if(u>CL.su&&o&&o.st){S=o;CL.su=u;lsSet(KEY_HOER,JSON.stringify(S));lsSet(KEY_HOER+'_u',String(u));redo=true;}}
+    });
+    if(!CL.on){
+      CL.on=true;
+      /* first contact: this browser holds data the cloud lacks (or newer) -> upload it */
+      if(Object.keys(TM).length){if(!CL.tu){CL.tu=Date.now();lsSet(KEY_HTIME+'_u',String(CL.tu));}CL.q.t=1;}
+      if(Object.keys(S.st).length){if(!CL.su){CL.su=Date.now();lsSet(KEY_HOER+'_u',String(CL.su));}CL.q.s=1;}
+      clPush();
+    }
+    if(redo){HD.stations.forEach(function(st){try{refreshTr(st);}catch(e){}});try{renderOver();}catch(e){}toast('☁️ زمان‌بندی و پیشرفتِ Hören از ذخیرهٔ ابری برگشت.');}
+  }
+  (function(){
+    if(!(window.claude&&typeof window.claude.use==='function'))return;
+    Promise.all([window.claude.use('db'),window.claude.use('user')]).then(function(r){
+      var db=r[0],us=r[1];if(!db||!us)return null;
+      return us.id().then(function(id){if(!id)return;CL.col=db.doc('data/users/'+id+'/hoeren').collection('L'+(HD.n||7));CL.col.onSnapshot(clApply,function(){});});
+    }).catch(function(){});
+  })();
   window.HOEREN={open:function(id){showTab('hoeren',true);showView('hoeren',id,true);},_t:{sdAnalyze:function(id,si,blob,rate){var st=ST[id];sdr(id).si=si;return sdAnalyze(st,si,blob,rate).then(function(){return sdr(id).res[si];});}}};
   D.addEventListener('click',function(e){var b=e.target.closest&&e.target.closest('[data-hoeren]');if(b){e.preventDefault();window.HOEREN.open(b.getAttribute('data-hoeren'));}});
 }
@@ -3610,8 +3645,6 @@ R.className+=' ready';
 })();
 
 </script>
-
-
 <!--progress-backup:start-->
 <style>
 #pbk-btn{position:fixed;left:12px;bottom:calc(12px + env(safe-area-inset-bottom,0px));z-index:2147483000;width:42px;height:42px;border-radius:50%;border:1px solid #a98348;background:#27344a;color:#f6f2ea;font-size:19px;line-height:1;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.3);opacity:.85;padding:0}
