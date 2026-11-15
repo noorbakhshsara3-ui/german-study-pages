@@ -1,0 +1,925 @@
+{
+ "base": "https://noorbakhshsara3-ui.github.io/german-study-pages/erinnerungswand/",
+ "unit": {
+  "card": 0.7,
+  "flash": 0.12,
+  "textwpm": 40.0,
+  "hoer_x": 3.0,
+  "hoer_sent": 0.4,
+  "qa": 0.5,
+  "gtable": 4.0,
+  "rev": 0.8,
+  "dlg": 3.0,
+  "sprech": 20.0,
+  "wtask": 25.0,
+  "wview": 1.5
+ },
+ "lessons": {
+  "6": {
+   "num": 6,
+   "title": "Einladung & Gäste",
+   "cards": 336,
+   "examples": 1680,
+   "flash": 468,
+   "dlg": 14,
+   "satz": 22,
+   "exSets": 11,
+   "qa": 73,
+   "textSents": 67,
+   "textWords": 798,
+   "gramTables": 17,
+   "revBoxes": 17,
+   "wtasks": 4,
+   "writeViews": 11,
+   "sections": [
+    {
+     "id": "gast",
+     "fa": "دعوت و میزبانی",
+     "n": 36
+    },
+    {
+     "id": "essen",
+     "fa": "غذا و خواستهٔ ویژه",
+     "n": 14
+    },
+    {
+     "id": "tisch",
+     "fa": "سرِ میز",
+     "n": 47
+    },
+    {
+     "id": "verhalten",
+     "fa": "رفتار و گفتگو",
+     "n": 39
+    },
+    {
+     "id": "basis",
+     "fa": "اسم و فعل پایه",
+     "n": 23
+    },
+    {
+     "id": "adj",
+     "fa": "صفت‌ها",
+     "n": 38
+    },
+    {
+     "id": "adv",
+     "fa": "قیدها",
+     "n": 39
+    },
+    {
+     "id": "konn",
+     "fa": "حرف‌های ربط",
+     "n": 14
+    },
+    {
+     "id": "ausdr",
+     "fa": "اصطلاح‌ها",
+     "n": 21
+    },
+    {
+     "id": "rm_gastgeber",
+     "fa": "میزبان",
+     "n": 18
+    },
+    {
+     "id": "rm_gast",
+     "fa": "مهمان",
+     "n": 14
+    },
+    {
+     "id": "rm_sonder",
+     "fa": "خواستهٔ ویژه",
+     "n": 11
+    },
+    {
+     "id": "rm_meinung",
+     "fa": "نظر",
+     "n": 6
+    },
+    {
+     "id": "rm_tipps",
+     "fa": "توصیه‌ها",
+     "n": 10
+    },
+    {
+     "id": "rm_rolle",
+     "fa": "نقش‌بازی",
+     "n": 6
+    }
+   ],
+   "hoeren": [],
+   "est": {
+    "vocab": 291,
+    "gram": 118,
+    "listen": 20,
+    "speak": 62,
+    "write": 116,
+    "total": 607
+   },
+   "page": "lektion-06/index.html"
+  },
+  "7": {
+   "num": 7,
+   "title": "Haustiere & Beratung",
+   "cards": 241,
+   "examples": 1205,
+   "flash": 366,
+   "dlg": 14,
+   "satz": 23,
+   "exSets": 15,
+   "qa": 130,
+   "textSents": 38,
+   "textWords": 409,
+   "gramTables": 11,
+   "revBoxes": 26,
+   "wtasks": 5,
+   "writeViews": 11,
+   "sections": [
+    {
+     "id": "tiere",
+     "fa": "حیوانات و وسایل",
+     "n": 28
+    },
+    {
+     "id": "pflege",
+     "fa": "نگهداری",
+     "n": 18
+    },
+    {
+     "id": "beratung",
+     "fa": "مشاوره و خرید",
+     "n": 37
+    },
+    {
+     "id": "info",
+     "fa": "متن و آمار",
+     "n": 29
+    },
+    {
+     "id": "infzu",
+     "fa": "Infinitiv mit zu",
+     "n": 18
+    },
+    {
+     "id": "basis",
+     "fa": "واژه‌های پایه",
+     "n": 58
+    },
+    {
+     "id": "rm_ansprechen",
+     "fa": "مخاطب‌قراردادن",
+     "n": 2
+    },
+    {
+     "id": "rm_wunsch",
+     "fa": "خواسته",
+     "n": 4
+    },
+    {
+     "id": "rm_info",
+     "fa": "اطلاع و هشدار",
+     "n": 6
+    },
+    {
+     "id": "rm_empf",
+     "fa": "توصیه",
+     "n": 3
+    },
+    {
+     "id": "rm_reakt",
+     "fa": "واکنش و تصمیم",
+     "n": 7
+    },
+    {
+     "id": "rm_tier",
+     "fa": "حیوانات و نظر",
+     "n": 8
+    },
+    {
+     "id": "rm_hoeren",
+     "fa": "از گفت‌وگوهای Hören",
+     "n": 23
+    }
+   ],
+   "hoeren": [
+    {
+     "id": "h1",
+     "de": "Am Kaninchengehege",
+     "fa": "صدای شروع درس: کنار خرگوش‌ها",
+     "book": "Kursbuch Lektion 7 · Aufgabe 1",
+     "audioMin": 0.5,
+     "sents": 0,
+     "est": 2
+    },
+    {
+     "id": "h2",
+     "de": "Im Tierheim",
+     "fa": "در پناهگاه حیوانات",
+     "book": "Kursbuch Lektion 7 · Aufgabe 4",
+     "audioMin": 4.1,
+     "sents": 56,
+     "est": 35
+    },
+    {
+     "id": "h3",
+     "de": "Beraten & Empfehlen",
+     "fa": "توصیه و راهنمایی (ادامهٔ گفت‌وگو)",
+     "book": "Kursbuch Lektion 7 · Aufgabe 5a",
+     "audioMin": 2.5,
+     "sents": 34,
+     "est": 21
+    },
+    {
+     "id": "h4",
+     "de": "Die Regenjacke",
+     "fa": "بارانی",
+     "book": "Kursbuch Lektion 7 · Aufgabe 7b",
+     "audioMin": 1.0,
+     "sents": 15,
+     "est": 9
+    }
+   ],
+   "est": {
+    "vocab": 213,
+    "gram": 130,
+    "listen": 77,
+    "speak": 62,
+    "write": 142,
+    "total": 624
+   },
+   "page": "lektion-07/index.html"
+  },
+  "8": {
+   "num": 8,
+   "title": "Beruf & Test",
+   "cards": 168,
+   "examples": 840,
+   "flash": 255,
+   "dlg": 14,
+   "satz": 21,
+   "exSets": 11,
+   "qa": 74,
+   "textSents": 44,
+   "textWords": 621,
+   "gramTables": 9,
+   "revBoxes": 18,
+   "wtasks": 4,
+   "writeViews": 11,
+   "sections": [
+    {
+     "id": "beruf",
+     "fa": "شغل و آموزش",
+     "n": 28
+    },
+    {
+     "id": "test",
+     "fa": "آزمون و تصویر-واژه‌ها",
+     "n": 26
+    },
+    {
+     "id": "eigen",
+     "fa": "ویژگی‌ها",
+     "n": 33
+    },
+    {
+     "id": "verb",
+     "fa": "فعل‌ها",
+     "n": 29
+    },
+    {
+     "id": "konn",
+     "fa": "حرف‌های ربط",
+     "n": 5
+    },
+    {
+     "id": "ausdr",
+     "fa": "اصطلاح‌ها",
+     "n": 7
+    },
+    {
+     "id": "adv",
+     "fa": "قیدها",
+     "n": 8
+    },
+    {
+     "id": "rm_stellung",
+     "fa": "نظر دادن",
+     "n": 11
+    },
+    {
+     "id": "rm_beratung",
+     "fa": "مشاوره",
+     "n": 9
+    },
+    {
+     "id": "rm_test",
+     "fa": "پرسش‌های آزمون",
+     "n": 7
+    },
+    {
+     "id": "rm_zeit",
+     "fa": "da · bevor · während",
+     "n": 5
+    }
+   ],
+   "hoeren": [],
+   "est": {
+    "vocab": 148,
+    "gram": 87,
+    "listen": 16,
+    "speak": 62,
+    "write": 116,
+    "total": 429
+   },
+   "page": "lektion-08/index.html"
+  },
+  "9": {
+   "num": 9,
+   "title": "Gesundheit & Präsentation",
+   "cards": 291,
+   "examples": 1455,
+   "flash": 397,
+   "dlg": 14,
+   "satz": 21,
+   "exSets": 11,
+   "qa": 79,
+   "textSents": 84,
+   "textWords": 1075,
+   "gramTables": 10,
+   "revBoxes": 20,
+   "wtasks": 4,
+   "writeViews": 11,
+   "sections": [
+    {
+     "id": "gesund",
+     "fa": "سلامت و تغذیه",
+     "n": 29
+    },
+    {
+     "id": "betrieb",
+     "fa": "شرکت و محلِ کار",
+     "n": 47
+    },
+    {
+     "id": "praes",
+     "fa": "ارائه",
+     "n": 21
+    },
+    {
+     "id": "verb",
+     "fa": "فعل‌ها",
+     "n": 52
+    },
+    {
+     "id": "adj",
+     "fa": "صفت‌ها و درجه‌ها",
+     "n": 39
+    },
+    {
+     "id": "lese",
+     "fa": "Lesemagazin",
+     "n": 32
+    },
+    {
+     "id": "ausdr",
+     "fa": "اصطلاح‌ها",
+     "n": 10
+    },
+    {
+     "id": "adv",
+     "fa": "قیدها",
+     "n": 13
+    },
+    {
+     "id": "rm_einl",
+     "fa": "شروعِ ارائه",
+     "n": 6
+    },
+    {
+     "id": "rm_ueber",
+     "fa": "گذار و نظر",
+     "n": 6
+    },
+    {
+     "id": "rm_abschl",
+     "fa": "پایانِ ارائه",
+     "n": 4
+    },
+    {
+     "id": "rm_regeln",
+     "fa": "دربارهٔ قانون‌ها",
+     "n": 6
+    },
+    {
+     "id": "rm_entsp",
+     "fa": "تمرینِ آرامش",
+     "n": 9
+    },
+    {
+     "id": "rm_hoeren",
+     "fa": "از متن‌های Hören",
+     "n": 17
+    }
+   ],
+   "hoeren": [
+    {
+     "id": "h1",
+     "de": "Büro-Tiefenentspannung",
+     "fa": "آرام‌سازیِ عمیق در دفتر",
+     "book": "Kursbuch Lektion 9 · Aufgabe 1b",
+     "audioMin": 2.2,
+     "sents": 12,
+     "est": 11
+    },
+    {
+     "id": "h2",
+     "de": "Gesundheitsmanagement im Betrieb",
+     "fa": "مدیریتِ سلامت در شرکت (سخنرانی)",
+     "book": "Kursbuch Lektion 9 · Aufgabe 7",
+     "audioMin": 4.1,
+     "sents": 30,
+     "est": 24
+    },
+    {
+     "id": "h3",
+     "de": "Entspannungsübung zum Mitmachen",
+     "fa": "تمرینِ آرام‌سازی، همراه با مربی",
+     "book": "Kursbuch Lektion 9 · Aufgabe 9a (vgl. 1b)",
+     "audioMin": 2.1,
+     "sents": 10,
+     "est": 10
+    }
+   ],
+   "est": {
+    "vocab": 251,
+    "gram": 96,
+    "listen": 72,
+    "speak": 62,
+    "write": 116,
+    "total": 597
+   },
+   "page": "lektion-09/index.html"
+  },
+  "10": {
+   "num": 10,
+   "title": "Pannen & Enttäuschung",
+   "cards": 184,
+   "examples": 920,
+   "flash": 278,
+   "dlg": 14,
+   "satz": 20,
+   "exSets": 11,
+   "qa": 71,
+   "textSents": 51,
+   "textWords": 696,
+   "gramTables": 10,
+   "revBoxes": 16,
+   "wtasks": 4,
+   "writeViews": 11,
+   "sections": [
+    {
+     "id": "pannen",
+     "fa": "بدبیاری‌ها",
+     "n": 26
+    },
+    {
+     "id": "radio",
+     "fa": "رادیو",
+     "n": 8
+    },
+    {
+     "id": "gesch",
+     "fa": "داستان‌ها",
+     "n": 28
+    },
+    {
+     "id": "verb",
+     "fa": "فعل‌ها",
+     "n": 48
+    },
+    {
+     "id": "gefuehl",
+     "fa": "احساس‌ها",
+     "n": 19
+    },
+    {
+     "id": "ausdr",
+     "fa": "اصطلاح‌ها",
+     "n": 14
+    },
+    {
+     "id": "adv",
+     "fa": "قیدها و ذره‌ها",
+     "n": 14
+    },
+    {
+     "id": "rm_ent",
+     "fa": "بیانِ ناامیدی",
+     "n": 6
+    },
+    {
+     "id": "rm_reag",
+     "fa": "واکنش",
+     "n": 9
+    },
+    {
+     "id": "rm_wunsch",
+     "fa": "آرزوهای غیرواقعی",
+     "n": 6
+    },
+    {
+     "id": "rm_komm",
+     "fa": "Kommentar",
+     "n": 6
+    }
+   ],
+   "hoeren": [],
+   "est": {
+    "vocab": 162,
+    "gram": 88,
+    "listen": 17,
+    "speak": 62,
+    "write": 116,
+    "total": 445
+   },
+   "page": "lektion-10/index.html"
+  },
+  "11": {
+   "num": 11,
+   "title": "Glücksmomente",
+   "cards": 180,
+   "examples": 900,
+   "flash": 290,
+   "dlg": 14,
+   "satz": 20,
+   "exSets": 11,
+   "qa": 69,
+   "textSents": 51,
+   "textWords": 653,
+   "gramTables": 9,
+   "revBoxes": 19,
+   "wtasks": 4,
+   "writeViews": 11,
+   "sections": [
+    {
+     "id": "glueck",
+     "fa": "لحظه‌های خوشبختی",
+     "n": 35
+    },
+    {
+     "id": "blog",
+     "fa": "وبلاگ و داستان‌ها",
+     "n": 22
+    },
+    {
+     "id": "gefuehl",
+     "fa": "احساس‌ها",
+     "n": 22
+    },
+    {
+     "id": "verb",
+     "fa": "فعل‌ها",
+     "n": 35
+    },
+    {
+     "id": "interj",
+     "fa": "صوت‌ها",
+     "n": 17
+    },
+    {
+     "id": "ausdr",
+     "fa": "اصطلاح‌ها",
+     "n": 13
+    },
+    {
+     "id": "adv",
+     "fa": "قیدها و حرف‌های ربط",
+     "n": 15
+    },
+    {
+     "id": "rm_komm",
+     "fa": "نظرِ احساسی",
+     "n": 8
+    },
+    {
+     "id": "rm_blog",
+     "fa": "پستِ وبلاگ",
+     "n": 6
+    },
+    {
+     "id": "rm_frage",
+     "fa": "پرسش و حدس",
+     "n": 7
+    }
+   ],
+   "hoeren": [],
+   "est": {
+    "vocab": 161,
+    "gram": 86,
+    "listen": 16,
+    "speak": 62,
+    "write": 116,
+    "total": 441
+   },
+   "page": "lektion-11/index.html"
+  },
+  "12": {
+   "num": 12,
+   "title": "Ausflug des Jahres",
+   "cards": 208,
+   "examples": 1040,
+   "flash": 293,
+   "dlg": 14,
+   "satz": 12,
+   "exSets": 11,
+   "qa": 77,
+   "textSents": 54,
+   "textWords": 818,
+   "gramTables": 10,
+   "revBoxes": 11,
+   "wtasks": 4,
+   "writeViews": 11,
+   "sections": [
+    {
+     "id": "veranst",
+     "fa": "مراسمِ شرکت",
+     "n": 22
+    },
+    {
+     "id": "betrieb",
+     "fa": "محلِ کار",
+     "n": 31
+    },
+    {
+     "id": "brief",
+     "fa": "نامه و ایمیل",
+     "n": 22
+    },
+    {
+     "id": "small",
+     "fa": "Small Talk",
+     "n": 15
+    },
+    {
+     "id": "lese",
+     "fa": "Lesemagazin",
+     "n": 9
+    },
+    {
+     "id": "verb",
+     "fa": "فعل‌ها",
+     "n": 30
+    },
+    {
+     "id": "adj",
+     "fa": "صفت‌ها",
+     "n": 24
+    },
+    {
+     "id": "ausdr",
+     "fa": "اصطلاح‌ها",
+     "n": 13
+    },
+    {
+     "id": "adv",
+     "fa": "قیدها و حرف‌های اضافه",
+     "n": 14
+    },
+    {
+     "id": "rm_anr",
+     "fa": "خطاب و پایان",
+     "n": 7
+    },
+    {
+     "id": "rm_brief",
+     "fa": "مقدمه و پایان",
+     "n": 8
+    },
+    {
+     "id": "rm_einlad",
+     "fa": "دعوت، قبول، رد",
+     "n": 8
+    },
+    {
+     "id": "rm_small",
+     "fa": "Small Talk",
+     "n": 5
+    }
+   ],
+   "hoeren": [],
+   "est": {
+    "vocab": 181,
+    "gram": 87,
+    "listen": 20,
+    "speak": 62,
+    "write": 116,
+    "total": 466
+   },
+   "page": "lektion-12/index.html"
+  },
+  "13": {
+   "num": 13,
+   "title": "Missverständnisse",
+   "cards": 150,
+   "examples": 750,
+   "flash": 222,
+   "dlg": 14,
+   "satz": 12,
+   "exSets": 11,
+   "qa": 73,
+   "textSents": 55,
+   "textWords": 708,
+   "gramTables": 9,
+   "revBoxes": 9,
+   "wtasks": 4,
+   "writeViews": 11,
+   "sections": [
+    {
+     "id": "teekessel",
+     "fa": "Teekesselchen",
+     "n": 13
+    },
+    {
+     "id": "sprache",
+     "fa": "زبان و سوءتفاهم",
+     "n": 17
+    },
+    {
+     "id": "restaurant",
+     "fa": "رستوران",
+     "n": 11
+    },
+    {
+     "id": "geschichte",
+     "fa": "رادیو و داستان‌ها",
+     "n": 16
+    },
+    {
+     "id": "verb",
+     "fa": "فعل‌ها",
+     "n": 31
+    },
+    {
+     "id": "adj",
+     "fa": "صفت‌ها",
+     "n": 15
+    },
+    {
+     "id": "adv",
+     "fa": "دلیل و نتیجه + قیدها",
+     "n": 14
+    },
+    {
+     "id": "ausdr",
+     "fa": "اصطلاح‌ها",
+     "n": 9
+    },
+    {
+     "id": "rm_erz",
+     "fa": "تعریف کردن",
+     "n": 11
+    },
+    {
+     "id": "rm_nach",
+     "fa": "دوباره پرسیدن",
+     "n": 8
+    },
+    {
+     "id": "rm_teek",
+     "fa": "Teekesselchen",
+     "n": 5
+    }
+   ],
+   "hoeren": [],
+   "est": {
+    "vocab": 132,
+    "gram": 80,
+    "listen": 18,
+    "speak": 62,
+    "write": 116,
+    "total": 408
+   },
+   "page": "lektion-13/index.html"
+  },
+  "14": {
+   "num": 14,
+   "title": "Weiterbildung",
+   "cards": 260,
+   "examples": 1300,
+   "flash": 340,
+   "dlg": 14,
+   "satz": 11,
+   "exSets": 11,
+   "qa": 76,
+   "textSents": 63,
+   "textWords": 839,
+   "gramTables": 12,
+   "revBoxes": 9,
+   "wtasks": 4,
+   "writeViews": 11,
+   "sections": [
+    {
+     "id": "kurs",
+     "fa": "Kurs & VHS",
+     "n": 14
+    },
+    {
+     "id": "bildung",
+     "fa": "Weiterbildung",
+     "n": 16
+    },
+    {
+     "id": "kurswahl",
+     "fa": "Kurswahl",
+     "n": 13
+    },
+    {
+     "id": "themen",
+     "fa": "Themenbereiche",
+     "n": 8
+    },
+    {
+     "id": "sport",
+     "fa": "Klettern",
+     "n": 14
+    },
+    {
+     "id": "musik",
+     "fa": "Musik",
+     "n": 10
+    },
+    {
+     "id": "telefon",
+     "fa": "Telefon",
+     "n": 15
+    },
+    {
+     "id": "kueche",
+     "fa": "Küche",
+     "n": 14
+    },
+    {
+     "id": "wurst",
+     "fa": "Wurst",
+     "n": 9
+    },
+    {
+     "id": "naehen",
+     "fa": "Nähen",
+     "n": 10
+    },
+    {
+     "id": "verb",
+     "fa": "فعل‌ها",
+     "n": 46
+    },
+    {
+     "id": "adj",
+     "fa": "صفت‌ها",
+     "n": 29
+    },
+    {
+     "id": "part1",
+     "fa": "Partizip I",
+     "n": 11
+    },
+    {
+     "id": "part2",
+     "fa": "Partizip II",
+     "n": 5
+    },
+    {
+     "id": "adv",
+     "fa": "قید و ربط",
+     "n": 12
+    },
+    {
+     "id": "ausdr",
+     "fa": "اصطلاح‌ها",
+     "n": 19
+    },
+    {
+     "id": "rm_empf",
+     "fa": "etwas empfehlen",
+     "n": 6
+    },
+    {
+     "id": "rm_angebot",
+     "fa": "Kursangebot",
+     "n": 9
+    }
+   ],
+   "hoeren": [],
+   "est": {
+    "vocab": 223,
+    "gram": 93,
+    "listen": 21,
+    "speak": 62,
+    "write": 116,
+    "total": 515
+   },
+   "page": "lektion-14/index.html"
+  }
+ }
+}
