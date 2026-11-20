@@ -486,12 +486,12 @@ var SEQ=(function(){var u=[];function add(n,D){for(var d=1;d<=D;d++)u.push({n:n,
   for(var n=1;n<=19;n++){add(n,LES[n].d);if((n+5)%3===0)add(50+(n+5)/3,1)}
   add(48,2);for(n=20;n<=43;n++){add(n,3);if(n===31)add(47,2)}add(44,12);return u})();
 var LIGHT_FROM="2026-10-14", LIGHTWD=5, LIGHTP=[0,0,0,20,0,40,60,0];
-function isLight(d){var k=ymd(d),lx=(S.settings&&S.settings.lightx)||{};return!!lx[k]||(d.getDay()===LIGHTWD&&k>=LIGHT_FROM)}
+function isLight(d){var k=ymd(d),lx=(S.settings&&S.settings.lightx)||{},hv=(S.settings&&S.settings.heavy)||{};if(hv[k])return false;return!!lx[k]||(d.getDay()===LIGHTWD&&k>=LIGHT_FROM)}
 function frozenWhy(d){var fz=(S.settings&&S.settings.freeze)||{};return fz[ymd(d)]||""}
 var NDAYS=0, NLES=58, LAYC={k:null,v:null};
 function layout(stS,brs){
   var cur=stS==null;stS=stS||S.settings.start||DEFAULT.settings.start;brs=(brs||(cur?S.settings.breaks:null)||[]).slice().sort(function(a,b){return a.i-b.i});
-  var key=stS+"|"+JSON.stringify(brs)+"|"+JSON.stringify(S.settings.freeze||{})+"|"+JSON.stringify(S.settings.lightx||{});if(cur&&LAYC.k===key){NDAYS=LAYC.v.length;return LAYC.v}
+  var key=stS+"|"+JSON.stringify(brs)+"|"+JSON.stringify(S.settings.freeze||{})+"|"+JSON.stringify(S.settings.lightx||{})+"|"+JSON.stringify(S.settings.heavy||{});if(cur&&LAYC.k===key){NDAYS=LAYC.v.length;return LAYC.v}
   var out=[],si=0,i=0,base=parseD(stS),lastN=SEQ[0].n;
   while(si<SEQ.length&&i<2000){var date=addDays(base,i);brs.forEach(function(b){if(b.i<=i)date=addDays(parseD(b.d),i-b.i)});
     var fzw=frozenWhy(date);
@@ -596,7 +596,7 @@ function chkHTML(d,title,limit){var st=daySteps(d),c=chkOf(d.i),n=0;if(!st.lengt
   return h+"</div>"}
 function reminders(M){var out=[],now=new Date(),td=ymd(M.td);
   var calm=calmOn(),pr=[];
-  M.days.slice().reverse().forEach(function(d){if(d.diff<0&&d.diff>=-14&&ymd(d.date)>=CHK_FROM&&!d.fz&&!d.lt){var st=daySteps(d),c=chkOf(d.i),ord=chkOrder(st),core=calm?ord.slice(0,5):ord,miss=core.filter(function(j){return!c[j]}).map(function(j){return st[j]});
+  M.days.slice().reverse().forEach(function(d){if(d.diff<0&&d.diff>=-14&&ymd(d.date)>=CHK_FROM&&!d.fz&&!d.lt&&!d.closed){var st=daySteps(d),c=chkOf(d.i),ord=chkOrder(st),core=calm?ord.slice(0,5):ord,miss=core.filter(function(j){return!c[j]}).map(function(j){return st[j]});
     if(miss.length){out.push(["⏰","از "+(d.diff===-1?"دیروز":WD[d.wd]+" "+dm(d.date))+" ("+(d.lt?"روز سبک":fullLabel(d.n))+"): «"+miss[0].replace(/^[^\p{L}\p{N}«]+\s*/u,"").slice(0,70)+"…» مانده"+(miss.length>1?" و "+fa(miss.length-1)+" قدم دیگر":"")+". اگر انجامش دادی تیک بزن؛ وگرنه امروز با همین شروع کن.","editday",d.i]);pr.push(1)}}});
   function P(n){while(pr.length<out.length)pr.push(n)}
   var tdy=M.days.find(function(x){return x.diff===0});
@@ -1038,18 +1038,18 @@ function weekHTML(M,w){
     return'<button class="w7'+(x.o===0?" now":"")+'" data-a="agday" data-o="'+x.o+'"><div class="w7d"><b>'+lab+(frozenWhy(x.date)?" 🧊":isLight(x.date)?" 🌿":x.sport?" 🏃":"")+"</b><span>"+dm(x.date)+'</span></div><div class="w7i">'+items+'</div><div class="w7m">'+(x.mins?mh(x.mins):"")+"</div></button>"}).join("")+"</div>";
 }
 function screenToday(M){
-  var calm=calmOn(),d=M.days[M.pos],tld=M.days.find(function(x){return x.diff===0&&x.lt&&x.rem>0});if(tld)d=tld;var tday=M.days.find(function(x){return x.diff===0});if(calm&&tday)d=tday;var L=lessonInfo(d.n), td=M.td, T0=S.timer, run=isFocus()?T0:null, P=d.P;
+  var calm=calmOn(),d=M.days[M.pos],tld=M.days.find(function(x){return x.diff===0&&x.lt&&x.rem>0});if(tld)d=tld;var tday=M.days.find(function(x){return x.diff===0&&!x.closed});if(calm&&tday)d=tday;var L=lessonInfo(d.n), td=M.td, T0=S.timer, run=isFocus()?T0:null, P=d.P;
   var brief=X("brief")(uname()+" جان",fullLabel(d.n));
   var h='<div class="greet"><span class="stamp">CLASSIFIED · '+esc(L.code)+'</span><span>'+(TH().voice==="agent"?"🔒 کانال امن · "+WD[td.getDay()]+" "+dm(td):WD[td.getDay()]+" "+dm(td))+'</span><span class="chip">⏳ '+fa(Math.max(0,dayDiff(td,M.adjEnd)))+' روز تا آمادگی آزمون</span></div>';
   h+='<div class="brief" id="brief" data-text="'+esc(brief)+'">'+(typed?esc(brief):"")+"</div>";
   h+=d.fz?"":remHTML(M);
   var bd=M.days.filter(function(x){return x.diff<0&&x.rem>0}).length;if(!d.fz&&(M.back>=600||bd>=4))h+='<div class="card" style="margin-top:10px;border:2px solid var(--warn)"><b>⚠️ برنامه '+fa(bd)+" روز عقب افتاده ("+hm2(M.back)+")</b><p class=\"small\" style=\"margin:6px 0 10px\">اگر در کتاب جای دیگری هستی (مثلاً درس قبلی را خودت تمام کرده‌ای)، جای واقعی‌ات را بگو تا روزهای قبلی «تمام» شوند و برنامه از امروز از همان‌جا دوباره چیده شود.</p><button class=\"btn primary sm\" data-a=\"hereopen\">📍 جای من در کتاب</button></div>";
   var TA=tAgg(ymd(M.td));h+='<button class="chip" data-a="gotrep" style="margin-top:8px;border:0;cursor:pointer;font-weight:700">⏱️ امروز با تایمر: '+(TA.n?hm2(TA.m)+" · "+fa(TA.n)+" جلسه":"هنوز ۰ دقیقه")+" ←</button>";
-  h+='<div class="row" style="justify-content:flex-end;margin-top:8px"><button class="btn ghost sm" data-a="frzopen">'+(d.fz?"🧊 مدیریت فریز":"🧊 فریز / سبک کردن امروز")+"</button></div>";
+  h+='<div class="row" style="justify-content:flex-end;margin-top:8px"><button class="btn ghost sm" data-a="hereopen">📍 جای من در کتاب</button><button class="btn ghost sm" style="margin-inline-start:6px" data-a="frzopen">'+(d.fz?"🧊 مدیریت فریز":"🧊 فریز / سبک کردن امروز")+"</button></div>";
   h+='<div style="margin-top:10px"><div class="row" style="justify-content:space-between;margin-bottom:4px"><b class="small">🗓️ ۷ روز پیش رو</b><button class="btn ghost sm" data-a="gocal">تقویم ۴ هفته ←</button></div>'+calHTML(M,1)+'</div>';
   var upF=frzRanges(ymd(addDays(M.td,1))).filter(function(r){return dayDiff(M.td,parseD(r.from))<=14});if(upF.length&&!d.fz)h+='<button class="alert" data-a="gocal" style="width:100%;text-align:inherit;border:1px dashed '+ICE+';background:color-mix(in srgb,'+ICE+' 12%,var(--card));margin-top:8px;cursor:pointer"><span>🧊</span><span>فریز پیش رو: '+upF.map(function(r){return rangeTxt(r)+" · "+esc(r.why)}).join(" | ")+" ← تقویم</span></button>";
   if(d.fz){h+='<div class="card" style="margin-top:10px;text-align:center"><div style="font-size:44px">🧊</div><h2 style="margin:6px 0">امروز فریز است</h2><p>'+esc(d.fz)+' · استراحت کن. برنامه یک روز جلو رفته، هیچ کاری عقب نیفتاده و زنجیره‌ی روزهایت نمی‌شکند.</p><p class="small">اگر حالش را داشتی (کاملاً اختیاری): فقط ۵ دقیقه فلش‌کارت.</p><div class="row" style="gap:8px;justify-content:center;flex-wrap:wrap"><button class="btn ghost sm" data-a="gofc">🃏 ۵ دقیقه فلش‌کارت</button><button class="btn ghost sm" data-a="unfrz" data-d="'+ymd(d.date)+'">لغو فریز امروز</button></div></div>';return h}
-  if(dayDiff(td,M.st)>0)h+='<div class="banner">برنامه از '+WD[M.st.getDay()]+" "+dm(M.st)+" شروع می‌شود. می‌توانی از همین حالا شروع کنی؛ دقیقه‌ها به روز اول اضافه می‌شوند.</div>";
+  var sd0=M.days[M.pos].diff>0?M.days[M.pos].date:M.st;if(dayDiff(td,sd0)>0)h+='<div class="banner">برنامه از '+WD[sd0.getDay()]+" "+dm(sd0)+" شروع می‌شود. می‌توانی از همین حالا شروع کنی؛ دقیقه‌ها به روز اول اضافه می‌شوند.</div>";
   if(M.goal&&!calm){h+='<div class="banner">🎯 هدف: '+WD[M.goal.getDay()]+" "+dm(M.goal)+" ("+fa(M.gDays)+" روز دیگر) · "+(M.compress?"برای رسیدن، روزی "+mh(M.need)+" لازم است"+(M.need>360?" ⚠️ این خیلی زیاد است؛ تاریخ هدف را عقب‌تر ببر.":"."):"با برنامه‌ی فعلی به هدف می‌رسی ✓")+"</div>"}
   if(d.lt&&!calm)h+='<div class="banner">🌿 امروز روز سبک است: حدود ۲ ساعت مرور (فاصله‌دار ۱۴ و ۳۰ روزه، گرامر مخلوط و ورودی آزاد). درس جدید نخوان؛ تثبیت و استراحت هم بخشی از یادگیری است.</div>';
   if(d.diff<0&&!calm)h+='<div class="banner">این روز جبرانی است: '+WD[d.wd]+" "+dm(d.date)+". بعد از کامل شدنش، برنامه خودکار جلو می‌رود.</div>";
@@ -1805,12 +1805,37 @@ function ask(msg,retry){if(OKMSG===msg){OKMSG=null;return true}var c=document.ge
   return false}
 /* 📍 where am I: close every unfinished day before the chosen lesson-day and re-plan from today */
 function hereList(M){var out=[],seen={};M.days.forEach(function(d){if(d.lt||d.fz)return;var key=d.n+"_"+d.dol;if(seen[key])return;seen[key]=1;out.push(d)});return out}
-function hereModal(){var M=model(),cur=M.days[M.pos],L=hereList(M),ns=[];L.forEach(function(d){if(ns.indexOf(d.n)<0)ns.push(d.n)});
+function hereDols(n){var o=[];hereList(model()).forEach(function(d){if(d.n===n&&o.indexOf(d.dol)<0)o.push(d.dol)});return o.sort(function(x,y){return x-y})}
+function hereDayOpts(n,sel){var o=hereDols(n);if(o.indexOf(sel)<0)sel=o[0];return o.map(function(x){return'<option value="'+x+'"'+(x===sel?" selected":"")+">روز "+fa(x)+"</option>"}).join("")}
+function herePreview(){var pv=document.getElementById("here-pv");if(!pv)return;var R=hereApply(+document.getElementById("here-n").value,+document.getElementById("here-d").value||1,(document.getElementById("here-dt")||{}).value);
+  pv.innerHTML=R?"▶ "+esc(R.label)+" ← "+WD[R.D.getDay()]+" "+dm(R.D)+(R.cnt?"<br>"+fa(R.cnt)+" روز ناتمامِ قبل از آن «تمام (خارج از برنامه)» می‌شود":"")+"<br>پایان جدید برنامه: "+dm(R.end)+" "+R.end.getFullYear():"این روز در برنامه پیدا نشد."}
+function hereModal(){var M=model(),cur=M.days[M.pos],L=hereList(M),ns=[];L.forEach(function(d){if(ns.indexOf(d.n)<0)ns.push(d.n)});if(ns.indexOf(cur.n)<0)cur=L[0]||cur;
+  var h='<div class="scrim" data-a="close"><div class="sheet" role="dialog" aria-modal="true" data-stop="1"><h3>📍 الان کجای کتاب هستی؟</h3><p class="small">درس و روزی را که در تاریخ انتخابی شروع می‌کنی بگو. روزهای ناتمامِ قبل از آن «✔️ تمام (خارج از برنامه)» می‌شوند (ساعت مطالعه‌ی تایمر دست نمی‌خورد)، عقب‌افتادگی پاک می‌شود و برنامه از همان تاریخ دوباره چیده می‌شود. اگر آن تاریخ جمعه یا روز سبک باشد، همان روز، روز درسی حساب می‌شود.</p>';
+  h+='<label class="f" for="here-n">درس</label><select id="here-n">'+ns.map(function(n){return'<option value="'+n+'"'+(n===cur.n?" selected":"")+">"+esc(fullLabel(n))+"</option>"}).join("")+'</select><label class="f" for="here-d">روزِ درس</label><select id="here-d">'+hereDayOpts(cur.n,cur.dol)+'</select><label class="f" for="here-dt">از تاریخ</label><input id="here-dt" type="date" value="'+ymd(M.td)+'">';
+  h+='<div class="alert" id="here-pv" style="margin-top:12px;display:block;line-height:1.9"></div>';
+  h+='<div class="row" style="justify-content:flex-end;gap:8px;margin-top:14px"><button class="btn ghost" data-a="close">انصراف</button><button class="btn primary" data-a="hereok">📍 همین‌جا شروع کن</button></div></div></div>';
+  document.getElementById("modal").innerHTML=h;
+  var sn=document.getElementById("here-n"),sd=document.getElementById("here-d"),sdt=document.getElementById("here-dt");
+  sn.onchange=function(){sd.innerHTML=hereDayOpts(+sn.value,1);herePreview()};sd.onchange=herePreview;sdt.onchange=herePreview;herePreview()}
+function hereApply(n,dol,ds){var M=model(),L=hereList(M),tgt=L.find(function(d){return d.n===n&&d.dol===dol});if(!tgt)return null;
+  var D=ds?parseD(ds):M.td;if(!D||isNaN(D.getTime()))D=M.td;var dstr=ymd(D),fi=tgt.i,cl={},old=S.settings.closed||{};
+  Object.keys(old).forEach(function(k){if(+k>=fi)cl[k]=null});
+  M.days.forEach(function(d){if(d.i<fi&&d.rem>0&&!d.fz)cl[d.i]=1});
+  var hv=Object.assign({},S.settings.heavy||{});if(isLight(D)&&!frozenWhy(D))hv[dstr]=1;
+  var nb=(S.settings.breaks||[]).filter(function(b){return b.i<fi}).concat([{i:fi,d:dstr}]),sv=S.settings,nl;
+  var same=function(l){var u=l[fi];return!!u&&u.n===tgt.n&&u.dol===tgt.dol&&!u.lt&&!u.fz};
+  S.settings=Object.assign({},sv,{heavy:hv});
+  try{nl=layout(sv.start,nb);
+    if(fi>0&&M.days[fi-1].date>=D){for(var k=0;k<60;k++){var nb2=[{i:0,d:ymd(addDays(D,-fi-k))},{i:fi,d:dstr}],l2=layout(sv.start,nb2);if(same(l2)){nb=nb2;nl=l2;break}}}
+  }finally{S.settings=sv}
+  var end=nl[nl.length-1].date,cnt=Object.keys(cl).filter(function(k){return cl[k]}).length;
+  return{fi:fi,cl:cl,nb:nb,hv:hv,end:end,cnt:cnt,D:D,label:fullLabel(tgt.n)+" · روز "+fa(tgt.dol)}}
+function hereModalOld(){var M=model(),cur=M.days[M.pos],L=hereList(M),ns=[];L.forEach(function(d){if(ns.indexOf(d.n)<0)ns.push(d.n)});
   var h='<div class="scrim" data-a="close"><div class="sheet" role="dialog" aria-modal="true" data-stop="1"><h3>📍 الان کجای کتاب هستی؟</h3><p class="small">اگر بیرون از برنامه جلو رفته‌ای (یا برنامه عقب افتاده)، درس و روزی را که الان شروع می‌کنی انتخاب کن. روزهای ناتمامِ قبل از آن «✔️ تمام (خارج از برنامه)» می‌شوند (بدون دقیقه‌ی ساختگی؛ ساعت مطالعه‌ی تایمر دست نمی‌خورد)، عقب‌افتادگی پاک می‌شود و برنامه از امروز دوباره چیده می‌شود.</p>';
   h+='<label class="f" for="here-n">درس</label><select id="here-n">'+ns.map(function(n){return'<option value="'+n+'"'+(n===cur.n?" selected":"")+">"+esc(fullLabel(n))+"</option>"}).join("")+'</select><label class="f" for="here-d">روزِ درس</label><select id="here-d">'+[1,2,3,4].map(function(x){return'<option value="'+x+'">روز '+fa(x)+"</option>"}).join("")+"</select>";
   h+='<div class="row" style="justify-content:flex-end;gap:8px;margin-top:14px"><button class="btn ghost" data-a="close">انصراف</button><button class="btn primary" data-a="hereok">📍 از امروز همین‌جا</button></div></div></div>';
   document.getElementById("modal").innerHTML=h}
-function hereApply(n,dol){var M=model(),L=hereList(M),tgt=L.find(function(d){return d.n===n&&d.dol===dol})||L.find(function(d){return d.n===n});if(!tgt)return null;var fi=tgt.i,td=ymd(M.td),cl={},old=S.settings.closed||{};
+function hereApplyOld(n,dol){var M=model(),L=hereList(M),tgt=L.find(function(d){return d.n===n&&d.dol===dol})||L.find(function(d){return d.n===n});if(!tgt)return null;var fi=tgt.i,td=ymd(M.td),cl={},old=S.settings.closed||{};
   Object.keys(old).forEach(function(k){if(+k>=fi)cl[k]=null});
   M.days.forEach(function(d){if(d.i<fi&&d.rem>0&&!d.fz)cl[d.i]=1});
   var nb=(S.settings.breaks||[]).filter(function(b){return b.i<fi}).concat([{i:fi,d:td}]),nl=layout(S.settings.start,nb),end=nl[nl.length-1].date,cnt=Object.keys(cl).filter(function(k){return cl[k]}).length;
@@ -1976,7 +2001,7 @@ function withCelebrate(fn){
 function typeBrief(){var el=document.getElementById("brief");if(!el||typed)return;typed=true;var txt=el.dataset.text||"";
   if(reduced()){el.textContent=txt;return}
   var i=0;el.innerHTML='<span></span><span class="cur"></span>';var sp=el.firstChild;
-  (function step(){if(document.getElementById("brief")!==el){var n=document.getElementById("brief");if(n)n.textContent=txt;return}i++;sp.textContent=txt.slice(0,i);if(i<txt.length)setTimeout(step,24);else setTimeout(function(){var c=el.querySelector(".cur");if(c)c.remove()},1400)})();}
+  (function step(){if(document.getElementById("brief")!==el){var n=document.getElementById("brief");if(n)n.textContent=n.dataset.text||txt;return}i++;sp.textContent=txt.slice(0,i);if(i<txt.length)setTimeout(step,24);else setTimeout(function(){var c=el.querySelector(".cur");if(c)c.remove()},1400)})();}
 
 function render(){
   applySkin();
@@ -2020,7 +2045,10 @@ document.addEventListener("click",function(ev){
     patch({settings:Mx.pos===0?{start:ymd(D),breaks:[]}:{breaks:nb}});ui.rp=null;celebrate("برنامه دوباره چیده شد",false);toast("ادامه از "+dm(D)+" · پایان جدید: "+dm(end));return}
   if(a==="goal-clear"){patch({settings:{goal:""}});return}
   if(a==="hereopen"){hereModal();return}
-  if(a==="hereok"){var hn=+(document.getElementById("here-n")||{}).value,hd=+(document.getElementById("here-d")||{}).value||1,R=hereApply(hn,hd);if(!R){toast("این درس پیدا نشد.");return}
+  if(a==="hereok"){var hn=+(document.getElementById("here-n")||{}).value,hd=+(document.getElementById("here-d")||{}).value||1,hdt=(document.getElementById("here-dt")||{}).value,R=hereApply(hn,hd,hdt);if(!R){toast("این روز در برنامه پیدا نشد.");return}
+    var Mg=model();if(!ask("از "+WD[R.D.getDay()]+" "+dm(R.D)+": "+R.label+"\n"+fa(R.cnt)+" روز ناتمامِ قبلی «تمام (خارج از برنامه)» می‌شود.\nپایان جدید برنامه: "+dm(R.end)+" "+R.end.getFullYear()+(Mg.goal&&R.end>Mg.goal?"\n⚠️ از تاریخ هدف ("+dm(Mg.goal)+") می‌گذرد.":""),function(){t.click()}))return;
+    var pt={settings:{closed:R.cl,breaks:R.nb,heavy:R.hv}};if(!isFocus())pt.timer=null;patch(pt);closeModal();ui.tab="today";ui.enter=true;render();window.scrollTo(0,0);celebrate("📍 "+R.label+" ← "+dm(R.D),true);return}
+  if(a==="hereok_old"){var hn=+(document.getElementById("here-n")||{}).value,hd=+(document.getElementById("here-d")||{}).value||1,R=hereApplyOld(hn,hd);if(!R){toast("این درس پیدا نشد.");return}
     var Mg=model();if(!ask("از امروز: "+R.label+"\n"+fa(R.cnt)+" روز ناتمامِ قبلی «تمام (خارج از برنامه)» می‌شود.\nپایان جدید برنامه: "+dm(R.end)+" "+R.end.getFullYear()+(Mg.goal&&R.end>Mg.goal?"\n⚠️ از تاریخ هدف ("+dm(Mg.goal)+") می‌گذرد.":""),function(){t.click()}))return;
     var pt={settings:{closed:R.cl,breaks:R.nb}};if(!isFocus())pt.timer=null;patch(pt);closeModal();ui.tab="today";ui.enter=true;render();window.scrollTo(0,0);celebrate("📍 برنامه از امروز با "+R.label+" ادامه دارد",true);return}
   if(a==="tday"){ui.tDay=t.dataset.d;render();return}
@@ -2171,6 +2199,10 @@ document.addEventListener("change",function(ev){
 });
 document.addEventListener("visibilitychange",function(){if(!document.hidden)render()});
 
+/* GitHub copy: one-time replan (2026-11-20) - past days closed (hours kept), Lektion 9 day 2 on 2026-11-21 */
+try{if(!S.settings.mig2&&!window.claude){var RL=hereApply(4,2,"2026-11-21");
+  if(RL){var cl3={},oc=S.settings.closed||{};Object.keys(oc).forEach(function(k){if(+k<RL.fi&&oc[k])cl3[k]=1});Object.keys(RL.cl).forEach(function(k){if(RL.cl[k])cl3[k]=1});
+    S.settings=Object.assign({},S.settings,{closed:cl3,breaks:RL.nb,heavy:RL.hv,mig2:"gh-replan-2026-11-20"});S.timer=null;LAYC={k:null,v:null};layout();cache()}}}catch(eRL){}
 render();
 connect();
 })();
