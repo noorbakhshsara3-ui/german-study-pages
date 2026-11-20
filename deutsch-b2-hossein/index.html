@@ -883,7 +883,7 @@ function tgtOptions(M){var o=[["today","📌 امروز · "+fullLabel(M.days[to
   M.days.forEach(function(d){if(d.diff<0&&d.rem>0)o.push([String(d.i),"🔁 جبرانی "+dm(d.date)+" · "+fullLabel(d.n)+" · "+dayTxt(d).replace(" از ۴","")+" ("+fa(d.rem)+"′ مانده)"])});
   o.push(["auto","⚡ خودکار: اول قدیمی‌ترین کار مانده"]);return o}
 function dayNeed(tg,k){var M=model();if(typeof tg!=="number")return skillNeed(k);var d=M.days[tg];return d?Math.max(0,d.P[k]-d.got[k]):0}
-function startTimer(){var k=ui.skill,M=model(),tg=resolveTgt(ui.tgt==null&&S.timer&&S.timer.phase==="ready"&&S.timer.tgt!=null?String(S.timer.tgt):ui.tgt,M),pm=pset("pomo",25),need=dayNeed(tg,k),dur=need>0?Math.min(pm,need):pm,n=S.timer&&S.timer.n||0;
+function startTimer(){notifAuto();var k=ui.skill,M=model(),tg=resolveTgt(ui.tgt==null&&S.timer&&S.timer.phase==="ready"&&S.timer.tgt!=null?String(S.timer.tgt):ui.tgt,M),pm=pset("pomo",25),need=dayNeed(tg,k),dur=need>0?Math.min(pm,need):pm,n=S.timer&&S.timer.n||0;
   patch({timer:{skill:k,phase:"focus",start:Date.now(),dur:dur*60,n:n,tgt:tg,dev:DEVID}});unlockAudio()}
 var actx=null;function unlockAudio(){try{actx=actx||new(window.AudioContext||window.webkitAudioContext)();if(actx.state==="suspended")actx.resume()}catch(e){}}
 function chime(up){try{unlockAudio();if(!actx)return;var t0=actx.currentTime;(up?[660,880,1100]:[880,660]).forEach(function(f,i){var o=actx.createOscillator(),g=actx.createGain();o.frequency.value=f;o.type="sine";g.gain.setValueAtTime(0,t0+i*.22);g.gain.linearRampToValueAtTime(.25,t0+i*.22+.02);g.gain.exponentialRampToValueAtTime(.001,t0+i*.22+.5);o.connect(g);g.connect(actx.destination);o.start(t0+i*.22);o.stop(t0+i*.22+.55)})}catch(e){}try{navigator.vibrate&&navigator.vibrate(up?[200,100,200,100,300]:[300,150,300])}catch(e){}}
@@ -900,9 +900,21 @@ function hm2(m){m=Math.round(m);var h=Math.floor(m/60),r=m%60;return h?fa(h)+" �
 function pomoDone(){var t=S.timer;if(!t||pomoLock===t.start)return;pomoLock=t.start;var mins=Math.round(t.dur/60),r=logMinutes(t.skill,mins,t.tgt),n=(t.n||0)+1,le=pset("lEvery",4),lb=n%le===0,br=lb?pset("lbrk",15):pset("sbrk",5);
   var b=model();patch({minutes:r.add,sess:sessRec(t,mins,true),timer:{skill:t.skill,phase:"break",start:Date.now(),dur:br*60,n:n,long:lb,tgt:t.tgt,dev:DEVID}});var a=model();
   var full=false;for(var i=0;i<NDAYS;i++)if(b.days[i].rem>0&&a.days[i].rem===0&&a.days[i].diff===0)full=true;
-  ui.lastLog=SKA[t.skill].e+" "+SKA[t.skill].name+" "+fa(mins)+"′ ← "+tgtLabel(t.tgt);chime(true);celebrate(full?"مأموریت امروز کامل شد":"🍅 پومودورو "+fa(n)+" کامل شد · "+mh(mins)+" ثبت شد",full);
+  ui.lastLog=SKA[t.skill].e+" "+SKA[t.skill].name+" "+fa(mins)+"′ ← "+tgtLabel(t.tgt);chime(true);notify(full?"🎉 مأموریت امروز کامل شد":"🍅 پومودورو "+fa(n)+" کامل شد",mh(mins)+" ثبت شد · "+(lb?"استراحت بلند ":"استراحت ")+fa(br)+" دقیقه","pomo-end");celebrate(full?"مأموریت امروز کامل شد":"🍅 پومودورو "+fa(n)+" کامل شد · "+mh(mins)+" ثبت شد",full);
   toast((lb?"☕ استراحت بلند ":"☕ استراحت ")+fa(br)+" دقیقه")}
-function breakDone(){var t=S.timer;if(!t||pomoLock===t.start)return;pomoLock=t.start;patch({timer:{skill:t.skill,phase:"ready",n:t.n||0,tgt:t.tgt,dev:DEVID}});chime(false);toast("⏰ استراحت تمام شد؛ پومودوروی بعدی آماده است")}
+/* ---- device notification when a pomodoro / break ends ---- */
+var endKey="",endT=0;
+function notifSup(){return typeof Notification!=="undefined"}
+function notifState(){return notifSup()?Notification.permission:"na"}
+function notify(title,body,tag){try{if(notifState()!=="granted"||S.settings.notify===false)return;if(!document.hidden&&document.hasFocus())return;var n=new Notification(title,{body:body,tag:tag||"pomo",renotify:true,dir:"rtl",lang:"fa"});n.onclick=function(){try{window.focus();n.close()}catch(e){}}}catch(e){}}
+function notifAsk(){if(!notifSup()){toast("این مرورگر یا محیط اعلان را پشتیبانی نمی‌کند.");return}
+  var st=Notification.permission;
+  if(st==="granted"){try{new Notification("🔔 اعلان فعال است",{body:"وقتی پومودورو یا استراحت تمام شود، اینجا خبر می‌دهم.",dir:"rtl",lang:"fa",tag:"pomo-test"})}catch(e){toast("ارسال اعلان ممکن نشد")}return}
+  if(st==="denied"){toast("اعلان در تنظیمات مرورگر مسدود است؛ از تنظیمات سایت اجازه بده.");return}
+  try{var p=Notification.requestPermission();if(p&&p.then)p.then(function(r){toast(r==="granted"?"🔔 اعلان فعال شد":"اعلان فعال نشد");render()},function(){toast("این محیط اجازهٔ اعلان نمی‌دهد")})}catch(e){toast("این محیط اجازهٔ اعلان نمی‌دهد")}}
+function notifAuto(){try{if(notifSup()&&Notification.permission==="default"&&!S.settings.notifAsked){patch({settings:{notifAsked:1}});var p=Notification.requestPermission();if(p&&p.then)p.then(function(){render()},function(){})}}catch(e){}}
+function notifBtn(){var s=notifState(),l=s==="granted"?"🔔 اعلان پایان پومودورو فعال ✓ (آزمایش)":s==="denied"?"🔕 اعلان مسدود است":s==="na"?"🔕 اعلان در این محیط نیست":"🔔 فعال‌سازی اعلان پایان پومودورو";return'<div class="row" style="justify-content:flex-end;margin-top:8px"><button class="btn ghost sm" data-a="notifask">'+l+"</button></div>"}
+function breakDone(){var t=S.timer;if(!t||pomoLock===t.start)return;pomoLock=t.start;patch({timer:{skill:t.skill,phase:"ready",n:t.n||0,tgt:t.tgt,dev:DEVID}});chime(false);notify("☕ استراحت تمام شد","وقت پومودوروی بعدی است · "+SKA[t.skill].name,"pomo-end");toast("⏰ استراحت تمام شد؛ پومودوروی بعدی آماده است")}
 function stopTimer(){
   var t=S.timer; if(!t)return;
   if(!isFocus()){patch({timer:null});toast("جلسه‌ی پومودورو تمام شد · "+fa(t.n||0)+" 🍅");return}
@@ -1045,7 +1057,7 @@ function screenToday(M){
   h+=d.fz?"":remHTML(M);
   var bd=M.days.filter(function(x){return x.diff<0&&x.rem>0}).length;if(!d.fz&&(M.back>=600||bd>=4))h+='<div class="card" style="margin-top:10px;border:2px solid var(--warn)"><b>⚠️ برنامه '+fa(bd)+" روز عقب افتاده ("+hm2(M.back)+")</b><p class=\"small\" style=\"margin:6px 0 10px\">اگر در کتاب جای دیگری هستی (مثلاً درس قبلی را خودت تمام کرده‌ای)، جای واقعی‌ات را بگو تا روزهای قبلی «تمام» شوند و برنامه از امروز از همان‌جا دوباره چیده شود.</p><button class=\"btn primary sm\" data-a=\"hereopen\">📍 جای من در کتاب</button></div>";
   var TA=tAgg(ymd(M.td));h+='<button class="chip" data-a="gotrep" style="margin-top:8px;border:0;cursor:pointer;font-weight:700">⏱️ امروز با تایمر: '+(TA.n?hm2(TA.m)+" · "+fa(TA.n)+" جلسه":"هنوز ۰ دقیقه")+" ←</button>";
-  h+='<div class="row" style="justify-content:flex-end;margin-top:8px"><button class="btn ghost sm" data-a="hereopen">📍 جای من در کتاب</button><button class="btn ghost sm" style="margin-inline-start:6px" data-a="frzopen">'+(d.fz?"🧊 مدیریت فریز":"🧊 فریز / سبک کردن امروز")+"</button></div>";
+  h+=notifBtn();h+='<div class="row" style="justify-content:flex-end;margin-top:8px"><button class="btn ghost sm" data-a="hereopen">📍 جای من در کتاب</button><button class="btn ghost sm" style="margin-inline-start:6px" data-a="frzopen">'+(d.fz?"🧊 مدیریت فریز":"🧊 فریز / سبک کردن امروز")+"</button></div>";
   h+='<div style="margin-top:10px"><div class="row" style="justify-content:space-between;margin-bottom:4px"><b class="small">🗓️ ۷ روز پیش رو</b><button class="btn ghost sm" data-a="gocal">تقویم ۴ هفته ←</button></div>'+calHTML(M,1)+'</div>';
   var upF=frzRanges(ymd(addDays(M.td,1))).filter(function(r){return dayDiff(M.td,parseD(r.from))<=14});if(upF.length&&!d.fz)h+='<button class="alert" data-a="gocal" style="width:100%;text-align:inherit;border:1px dashed '+ICE+';background:color-mix(in srgb,'+ICE+' 12%,var(--card));margin-top:8px;cursor:pointer"><span>🧊</span><span>فریز پیش رو: '+upF.map(function(r){return rangeTxt(r)+" · "+esc(r.why)}).join(" | ")+" ← تقویم</span></button>";
   if(d.fz){h+='<div class="card" style="margin-top:10px;text-align:center"><div style="font-size:44px">🧊</div><h2 style="margin:6px 0">امروز فریز است</h2><p>'+esc(d.fz)+' · استراحت کن. برنامه یک روز جلو رفته، هیچ کاری عقب نیفتاده و زنجیره‌ی روزهایت نمی‌شکند.</p><p class="small">اگر حالش را داشتی (کاملاً اختیاری): فقط ۵ دقیقه فلش‌کارت.</p><div class="row" style="gap:8px;justify-content:center;flex-wrap:wrap"><button class="btn ghost sm" data-a="gofc">🃏 ۵ دقیقه فلش‌کارت</button><button class="btn ghost sm" data-a="unfrz" data-d="'+ymd(d.date)+'">لغو فریز امروز</button></div></div>';return h}
@@ -2019,12 +2031,12 @@ var baseTitle=document.title;
 function tick(){
   var t=S.timer;if(!t||t.phase==="ready"){if(document.title!==baseTitle)document.title=baseTitle;return}
   var dur=t.dur||pset("pomo",25)*60,left=dur-(Date.now()-t.start)/1000;
-  if(left<=0){if(t.dev&&t.dev!==DEVID&&-left<120)return;if(t.phase==="break")breakDone();else pomoDone();return}
+  if(left>0){var sk0=t.start+"|"+t.phase;if(endKey!==sk0){endKey=sk0;clearTimeout(endT);endT=setTimeout(tick,left*1000+80)}}if(left<=0){if(t.dev&&t.dev!==DEVID&&-left<120)return;if(t.phase==="break")breakDone();else pomoDone();return}
   document.title=(t.phase==="break"?"☕ ":"🍅 ")+mmss(left)+" · Deutsch B2";
   var c=document.getElementById("clock");if(c)c.textContent=mmss(left);
   var pb=document.getElementById("pbar");if(pb)pb.style.width=(100*(1-left/dur)).toFixed(2)+"%";
 }
-setInterval(tick,1000);
+setInterval(tick,1000);document.addEventListener("visibilitychange",function(){if(!document.hidden)tick()});
 setInterval(function(){var ae=document.activeElement;if(document.hidden||document.querySelector("#modal .sheet")||(ae&&/INPUT|TEXTAREA|SELECT/.test(ae.tagName)))return;if(ui.tab==="today"||ui.tab==="plan")render()},60000);
 
 /* ---------- events ---------- */
@@ -2043,6 +2055,7 @@ document.addEventListener("click",function(ev){
   if(a==="rebase"||a==="rebase-today"){var dt=a==="rebase"?(ui.rp||ymd(todayD())):ymd(todayD());var Mx=model(),D=parseD(dt),nb=(S.settings.breaks||[]).filter(function(b){return b.i<Mx.pos}).concat([{i:Mx.pos,d:ymd(D)}]),nl=layout(S.settings.start,nb),end=nl[nl.length-1].date;
     if(!ask("ادامه‌ی برنامه از "+WD[D.getDay()]+" "+dm(D)+" دوباره چیده شود؟\nکارهای انجام‌شده سر جایشان می‌مانند. پایان جدید: "+dm(end)+" "+end.getFullYear(),function(){t.click()}))return;
     patch({settings:Mx.pos===0?{start:ymd(D),breaks:[]}:{breaks:nb}});ui.rp=null;celebrate("برنامه دوباره چیده شد",false);toast("ادامه از "+dm(D)+" · پایان جدید: "+dm(end));return}
+  if(a==="notifask"){notifAsk();return}
   if(a==="goal-clear"){patch({settings:{goal:""}});return}
   if(a==="hereopen"){hereModal();return}
   if(a==="hereok"){var hn=+(document.getElementById("here-n")||{}).value,hd=+(document.getElementById("here-d")||{}).value||1,hdt=(document.getElementById("here-dt")||{}).value,R=hereApply(hn,hd,hdt);if(!R){toast("این روز در برنامه پیدا نشد.");return}
