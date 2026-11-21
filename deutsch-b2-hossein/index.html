@@ -791,8 +791,8 @@ function lessonProg(M,n){var ds=M.days.filter(function(d){return d.n===n&&!d.lt&
 
 /* ---------- persistence ---------- */
 function setSync(kind,text){var el=document.getElementById("sync");el.innerHTML='<span class="dot '+kind+'"></span><span>'+esc(text)+"</span>"}
-function patch(p){
-  p=withLog(p);
+function patch(p,at){
+  p=withLog(p,at);
   S=merge(S,p); pending=merge(pending,p); cache(); render(); flush(); if(!(p.settings&&(p.settings.gsLast||p.settings.gsAuto!=null)&&Object.keys(p).length===1))gsSchedule();
 }
 function flush(){
@@ -829,11 +829,11 @@ function procWQ(){
 window.addEventListener("online",function(){setSync("saving","اتصال برقرار شد · در حال همگام‌سازی…");flush();procWQ()});
 window.addEventListener("offline",function(){offlineNote()});
 async function connect(){
-  if(!window.claude||!window.claude.use){setSync("local","فقط روی همین دستگاه");return}
+  if(!window.claude||!window.claude.use){SYNCED=true;setSync("local","فقط روی همین دستگاه");return}
   try{
     var u=await window.claude.use("user"); db=await window.claude.use("db");
     uid=u?await u.id():null;
-    if(!db||!uid){setSync("local","فقط روی همین دستگاه");return}
+    if(!db||!uid){SYNCED=true;setSync("local","فقط روی همین دستگاه");return}
     docRef=db.doc("data/users/"+uid+"/app");
     weakCol=docRef.collection("weak");libCol=docRef.collection("lib");
     libCol.onSnapshot(function(q){LB=q.docs.map(function(d){return d.data()});cache();render()},function(){});
@@ -841,7 +841,7 @@ async function connect(){
     if(!snap.exists){await docRef.set(clone(S))}
     docRef.onSnapshot(function(s){
       if(!s.exists)return;
-      S=merge(merge(DEFAULT,s.data()),pending); cache(); render();
+      S=merge(merge(DEFAULT,s.data()),pending); SYNCED=true; cache(); render();
       if(!writing&&!Object.keys(pending).length)setSync("","همگام");
     },function(){setSync("err","اتصال قطع شد")});
     weakCol.onSnapshot(function(q){
@@ -849,7 +849,7 @@ async function connect(){
       cache(); render();
     },function(){});
     mode="db"; setSync("","همگام"); flush(); procWQ();
-  }catch(e){setSync("local","فقط روی همین دستگاه")}
+  }catch(e){SYNCED=true;setSync("local","فقط روی همین دستگاه")}
 }
 
 /* ---------- actions ---------- */
@@ -883,10 +883,50 @@ function tgtOptions(M){var o=[["today","📌 امروز · "+fullLabel(M.days[to
   M.days.forEach(function(d){if(d.diff<0&&d.rem>0)o.push([String(d.i),"🔁 جبرانی "+dm(d.date)+" · "+fullLabel(d.n)+" · "+dayTxt(d).replace(" از ۴","")+" ("+fa(d.rem)+"′ مانده)"])});
   o.push(["auto","⚡ خودکار: اول قدیمی‌ترین کار مانده"]);return o}
 function dayNeed(tg,k){var M=model();if(typeof tg!=="number")return skillNeed(k);var d=M.days[tg];return d?Math.max(0,d.P[k]-d.got[k]):0}
-function startTimer(){notifAuto();var k=ui.skill,M=model(),tg=resolveTgt(ui.tgt==null&&S.timer&&S.timer.phase==="ready"&&S.timer.tgt!=null?String(S.timer.tgt):ui.tgt,M),pm=pset("pomo",25),need=dayNeed(tg,k),dur=need>0?Math.min(pm,need):pm,n=S.timer&&S.timer.n||0;
+function startTimer(){if(staleT()){toast("اول تکلیف پومودوروی نیمه‌تمامِ بالای صفحه را مشخص کن.");return}notifAuto();var k=ui.skill,M=model(),tg=resolveTgt(ui.tgt==null&&S.timer&&S.timer.phase==="ready"&&S.timer.tgt!=null?String(S.timer.tgt):ui.tgt,M),pm=pset("pomo",25),need=dayNeed(tg,k),dur=need>0?Math.min(pm,need):pm,n=S.timer&&S.timer.n||0;
   patch({timer:{skill:k,phase:"focus",start:Date.now(),dur:dur*60,n:n,tgt:tg,dev:DEVID}});unlockAudio()}
 var actx=null;function unlockAudio(){try{actx=actx||new(window.AudioContext||window.webkitAudioContext)();if(actx.state==="suspended")actx.resume()}catch(e){}}
 function chime(up){try{unlockAudio();if(!actx)return;var t0=actx.currentTime;(up?[660,880,1100]:[880,660]).forEach(function(f,i){var o=actx.createOscillator(),g=actx.createGain();o.frequency.value=f;o.type="sine";g.gain.setValueAtTime(0,t0+i*.22);g.gain.linearRampToValueAtTime(.25,t0+i*.22+.02);g.gain.exponentialRampToValueAtTime(.001,t0+i*.22+.5);o.connect(g);g.connect(actx.destination);o.start(t0+i*.22);o.stop(t0+i*.22+.55)})}catch(e){}try{navigator.vibrate&&navigator.vibrate(up?[200,100,200,100,300]:[300,150,300])}catch(e){}}
+/* ---- timer safety: wait for sync, compare with the server copy, one credit per pomodoro, real end time, stale-timer card ---- */
+var SYNCED=false,LATE_OTHER=120,LATE_MAX=600,stKey="";
+setTimeout(function(){if(!SYNCED){SYNCED=true;tick()}},15000);
+async function freshDoc(){try{if(!docRef||navigator.onLine===false)return null;var s=await docRef.get();return s&&s.exists?s.data():null}catch(e){return null}}
+function adopt(fr){S=merge(merge(DEFAULT,fr),pending);cache();render()}
+function tEnd(t){return t.start+(t.dur||pset("pomo",25)*60)*1000}
+function credited(t){var sr=sessRec(t,Math.max(1,Math.round((t.dur||0)/60)),true);return Object.keys(sr).some(function(dk){var o=(S.sess||{})[dk]||{};return Object.keys(sr[dk]).some(function(id){var x=o[id];return!!(x&&x.m>0)})})}
+function staleT(){var t=S.timer;if(!SYNCED||!t||!isFocus())return null;return(Date.now()-tEnd(t))/1000>LATE_MAX?t:null}
+function stampSrc(sr,src,f){Object.keys(sr).forEach(function(dk){Object.keys(sr[dk]).forEach(function(id){if(src)sr[dk][id].src=src;if(f!=null)sr[dk][id].f=f})});return sr}
+function undoRec(t,sr,mins,at0){var s=[];Object.keys(sr).forEach(function(dk){Object.keys(sr[dk]).forEach(function(id){s.push(dk+"|"+id)})});return{s:s,k:t.skill,tg:typeof t.tgt==="number"?t.tgt:-1,m:mins,at:at0,ts:Date.now(),done:0}}
+async function settle(t,late){
+  var key=t.start+"|"+t.phase;if(stKey===key)return;stKey=key;
+  var fr=await freshDoc();
+  if(fr){var st=fr.timer;adopt(fr);if(!st||st.start!==t.start||st.phase!==t.phase){stKey="";return}}
+  var c=S.timer;if(!c||c.start!==t.start||c.phase!==t.phase){stKey="";return}
+  if(c.phase==="break"){breakDone();return}
+  if(credited(c)){patch({timer:{skill:c.skill,phase:"ready",n:c.n||0,tgt:c.tgt,dev:DEVID}});return}
+  if(late>LATE_MAX){render();return}
+  pomoDone(late>LATE_OTHER?"late":"")}
+async function staleSettle(m){
+  var t0=S.timer;if(!t0||!staleT())return;var fr=await freshDoc();
+  if(fr){var st=fr.timer;adopt(fr);if(!st||st.start!==t0.start||st.phase!==t0.phase){toast("این جلسه قبلاً روی دستگاه دیگری تعیین تکلیف شده.");return}}
+  var t=S.timer;if(!t||!isFocus()||t.start!==t0.start)return;
+  var full=Math.max(1,Math.round((t.dur||pset("pomo",25)*60)/60));m=Math.max(0,Math.min(full,Math.round(m)||0));
+  if(!m||credited(t)){patch({timer:null});toast(m?"این جلسه قبلاً ثبت شده بود.":"نادیده گرفته شد؛ چیزی ثبت نشد.");return}
+  var at0=t.start+m*60000,t2=Object.assign({},t,{dur:m*60}),r=logMinutes(t.skill,m,t.tgt),sr=stampSrc(sessRec(t2,m,true),"card",m===full?1:0),p={minutes:r.add,sess:sr,timer:null};
+  if(typeof t.tgt==="number")p.undo=undoRec(t,sr,m,at0);
+  patch(p,at0);ui.lastLog=SKA[t.skill].e+" "+SKA[t.skill].name+" "+fa(m)+"′ ← "+tgtLabel(t.tgt);
+  toast(SKA[t.skill].e+" "+SKA[t.skill].name+": "+mh(m)+" ثبت شد (روی زمان واقعی جلسه)")}
+function undoAuto(){var u=S.undo;if(!u||u.done||!(u.tg>=0))return;
+  var cur=+((S.minutes[u.tg]||{})[u.k])||0,o={},ss={};o[u.tg]={};o[u.tg][u.k]=Math.max(0,cur-u.m);
+  (u.s||[]).forEach(function(q){var p=q.split("|");(ss[p[0]]=ss[p[0]]||{})[p[1]]=null});
+  patch({minutes:o,sess:ss,undo:{done:1}},u.at);toast("ثبت دیرهنگام برگشت داده شد.")}
+function ago(ms){var m=Math.round(ms/60000);return m<90?fa(m)+" دقیقه":m<2880?fa(Math.round(m/60))+" ساعت":fa(Math.round(m/1440))+" روز"}
+function staleCardHTML(){var t=staleT();if(!t)return"";var mins=Math.max(1,Math.round((t.dur||pset("pomo",25)*60)/60)),sk=SKA[t.skill]||SKA[0],st=new Date(t.start);
+  return'<section class="card" role="alert" style="margin-top:14px;border:2px solid var(--warn)"><b>⏳ یک پومودوروی نیمه‌تمام پیدا شد</b><p class="small" style="line-height:1.9;margin:8px 0">'+sk.e+" "+esc(sk.name)+" · "+fa(mins)+"′ · شروع: "+WD[st.getDay()]+" "+dm(st)+" ساعت "+clk(t.start)+" (حدود "+ago(Date.now()-tEnd(t))+" پیش تمام شده). برنامه نمی‌داند در آن زمان واقعاً درس خوانده‌ای یا نه؛ خودت مشخص کن.</p>"
+   +'<div class="row" style="gap:8px;flex-wrap:wrap;align-items:center"><label class="small">دقیقه‌ی خوانده‌شده <input id="stl-m" type="number" inputmode="numeric" min="1" max="'+mins+'" value="'+mins+'" style="width:72px"></label><button class="btn primary sm" data-a="stl-ok">✅ ثبت کن</button><button class="btn ghost sm" data-a="stl-no">❌ نخواندم</button></div></section>'}
+function undoCardHTML(){var u=S.undo;if(!u||u.done||!(u.tg>=0)||Date.now()-u.ts>864e5)return"";
+  var sk=SKA[u.k]||SKA[0],a=new Date(u.at);
+  return'<div class="small" style="display:flex;gap:8px;align-items:center;justify-content:space-between;flex-wrap:wrap;margin-top:12px;padding:8px 12px;border-radius:12px;background:color-mix(in srgb,var(--warn) 12%,transparent)"><span>🕒 ثبت دیرهنگام: '+sk.e+" "+esc(sk.name)+" "+fa(u.m)+"′ ← "+WD[a.getDay()]+" "+dm(a)+" ساعت "+clk(u.at)+'</span><button class="btn ghost sm" data-a="undoauto">↩️ برگردان</button></div>'}
 var pomoLock=0;
 /* real timer sessions per calendar day: S.sess[date][id]={s,e,m,k,tg,f(1=full pomodoro),dv} */
 function sessRec(t,mins,full){var s0=t.start,e0=Math.min(Date.now(),s0+(t.dur||1e9)*1000);if(full)e0=s0+(t.dur||0)*1000;var out={},cur=s0,left=mins,part=0;
@@ -897,11 +937,14 @@ function sessOf(date){var o=(S.sess||{})[date]||{};return Object.keys(o).map(fun
 function tAgg(date){var L=sessOf(date),sk={},m=0,f=0;L.forEach(function(x){m+=x.m;if(x.f)f++;sk[x.k]=(sk[x.k]||0)+x.m});return{L:L,m:m,n:L.length,f:f,sk:sk,first:L.length?L[0].s:0,last:L.length?L[L.length-1].e:0}}
 function clk(ms){var d=new Date(ms);return("0"+d.getHours()).slice(-2)+":"+("0"+d.getMinutes()).slice(-2)}
 function hm2(m){m=Math.round(m);var h=Math.floor(m/60),r=m%60;return h?fa(h)+" ساعت"+(r?" و "+fa(r)+" دقیقه":""):fa(r)+" دقیقه"}
-function pomoDone(){var t=S.timer;if(!t||pomoLock===t.start)return;pomoLock=t.start;var mins=Math.round(t.dur/60),r=logMinutes(t.skill,mins,t.tgt),n=(t.n||0)+1,le=pset("lEvery",4),lb=n%le===0,br=lb?pset("lbrk",15):pset("sbrk",5);
-  var b=model();patch({minutes:r.add,sess:sessRec(t,mins,true),timer:{skill:t.skill,phase:"break",start:Date.now(),dur:br*60,n:n,long:lb,tgt:t.tgt,dev:DEVID}});var a=model();
+function pomoDone(lateS){var t=S.timer;if(!t||pomoLock===t.start)return;pomoLock=t.start;var mins=Math.round(t.dur/60),n=(t.n||0)+1,le=pset("lEvery",4),lb=n%le===0,br=lb?pset("lbrk",15):pset("sbrk",5),at0=tEnd(t);
+  if(credited(t)){patch({timer:{skill:t.skill,phase:"ready",n:t.n||0,tgt:t.tgt,dev:DEVID}});return}
+  var r=logMinutes(t.skill,mins,t.tgt),sr=stampSrc(sessRec(t,mins,true),lateS||""),b=model(),pp={minutes:r.add,sess:sr,timer:{skill:t.skill,phase:"break",start:Date.now(),dur:br*60,n:n,long:lb,tgt:t.tgt,dev:DEVID}};
+  if(lateS&&typeof t.tgt==="number")pp.undo=undoRec(t,sr,mins,at0);
+  patch(pp,Math.min(at0,Date.now()));var a=model();
   var full=false;for(var i=0;i<NDAYS;i++)if(b.days[i].rem>0&&a.days[i].rem===0&&a.days[i].diff===0)full=true;
-  ui.lastLog=SKA[t.skill].e+" "+SKA[t.skill].name+" "+fa(mins)+"′ ← "+tgtLabel(t.tgt);chime(true);notify(full?"🎉 مأموریت امروز کامل شد":"🍅 پومودورو "+fa(n)+" کامل شد",mh(mins)+" ثبت شد · "+(lb?"استراحت بلند ":"استراحت ")+fa(br)+" دقیقه","pomo-end");celebrate(full?"مأموریت امروز کامل شد":"🍅 پومودورو "+fa(n)+" کامل شد · "+mh(mins)+" ثبت شد",full);
-  toast((lb?"☕ استراحت بلند ":"☕ استراحت ")+fa(br)+" دقیقه")}
+  ui.lastLog=SKA[t.skill].e+" "+SKA[t.skill].name+" "+fa(mins)+"′ ← "+tgtLabel(t.tgt);if(!lateS)chime(true);if(!lateS)notify(full?"🎉 مأموریت امروز کامل شد":"🍅 پومودورو "+fa(n)+" کامل شد",mh(mins)+" ثبت شد · "+(lb?"استراحت بلند ":"استراحت ")+fa(br)+" دقیقه","pomo-end");celebrate(full?"مأموریت امروز کامل شد":"🍅 پومودورو "+fa(n)+" کامل شد · "+mh(mins)+" ثبت شد",full);
+  toast((lateS?"🕒 پومودوروی ساعت "+clk(t.start)+" دیرهنگام ثبت شد · ":"")+(lb?"☕ استراحت بلند ":"☕ استراحت ")+fa(br)+" دقیقه")}
 /* ---- device notification when a pomodoro / break ends ---- */
 var endKey="",endT=0;
 function notifSup(){return typeof Notification!=="undefined"}
@@ -914,9 +957,9 @@ function notifAsk(){if(!notifSup()){toast("این مرورگر یا محیط ا�
   try{var p=Notification.requestPermission();if(p&&p.then)p.then(function(r){toast(r==="granted"?"🔔 اعلان فعال شد":"اعلان فعال نشد");render()},function(){toast("این محیط اجازهٔ اعلان نمی‌دهد")})}catch(e){toast("این محیط اجازهٔ اعلان نمی‌دهد")}}
 function notifAuto(){try{if(notifSup()&&Notification.permission==="default"&&!S.settings.notifAsked){patch({settings:{notifAsked:1}});var p=Notification.requestPermission();if(p&&p.then)p.then(function(){render()},function(){})}}catch(e){}}
 function notifBtn(){var s=notifState(),l=s==="granted"?"🔔 اعلان پایان پومودورو فعال ✓ (آزمایش)":s==="denied"?"🔕 اعلان مسدود است":s==="na"?"🔕 اعلان در این محیط نیست":"🔔 فعال‌سازی اعلان پایان پومودورو";return'<div class="row" style="justify-content:flex-end;margin-top:8px"><button class="btn ghost sm" data-a="notifask">'+l+"</button></div>"}
-function breakDone(){var t=S.timer;if(!t||pomoLock===t.start)return;pomoLock=t.start;patch({timer:{skill:t.skill,phase:"ready",n:t.n||0,tgt:t.tgt,dev:DEVID}});chime(false);notify("☕ استراحت تمام شد","وقت پومودوروی بعدی است · "+SKA[t.skill].name,"pomo-end");toast("⏰ استراحت تمام شد؛ پومودوروی بعدی آماده است")}
+function breakDone(){var t=S.timer;if(!t||pomoLock===t.start)return;pomoLock=t.start;patch({timer:{skill:t.skill,phase:"ready",n:t.n||0,tgt:t.tgt,dev:DEVID}});if(Date.now()-tEnd(t)>60000)return;chime(false);notify("☕ استراحت تمام شد","وقت پومودوروی بعدی است · "+SKA[t.skill].name,"pomo-end");toast("⏰ استراحت تمام شد؛ پومودوروی بعدی آماده است")}
 function stopTimer(){
-  var t=S.timer; if(!t)return;
+  var t=S.timer; if(!t)return;if(staleT()){toast("اول تکلیف پومودوروی نیمه‌تمامِ بالای صفحه را مشخص کن.");return}
   if(!isFocus()){patch({timer:null});toast("جلسه‌ی پومودورو تمام شد · "+fa(t.n||0)+" 🍅");return}
   var mins=Math.round(Math.min(Date.now()-t.start,(t.dur||1e9)*1000)/60000);
   if(mins<1){patch({timer:null});toast("کمتر از یک دقیقه بود و ثبت نشد.");return}
@@ -1072,6 +1115,7 @@ function screenToday(M){
   if(showTips&&phaseOn()&&PHASE_TIP[d.stage])h+='<div class="review" style="margin-top:6px">'+esc(PHASE_TIP[d.stage])+' <button class="btn ghost sm" data-a="phaseinfo" style="margin-top:4px">چرا این تقسیم وقت؟</button></div>';
   if(showTips)h+='<div class="review" style="margin-top:8px;font-weight:600">'+esc(motiv(d,M))+"</div>";h+=goalHTML(d,!calm&&d.dol===1);if(!calm)h+=bkTodayHTML(d);
   if(!calm)h+='<div class="row" style="margin-top:12px;gap:8px;flex-wrap:wrap">'+wordLink(d.n)+'<button class="btn ghost sm" data-a="lesson" data-n="'+d.n+'">📝 '+X("weakT")+' ('+fa(openWeak(d.n))+")</button></div>";
+  h+=staleCardHTML()+undoCardHTML();
   /* hero */
   var sel=run?run.skill:ui.skill;
   h+='<section class="card hero" aria-label="تایمر"><i class="corner c1"></i><i class="corner c2"></i><i class="corner c3"></i><i class="corner c4"></i><i class="scan"></i>';
@@ -1660,12 +1704,12 @@ function screenCoach(M){
 
 /* ===== daily study log ===== */
 var LCAT={n:{t:"برنامه‌ی همان روز",e:"🆕",c:"var(--accent)"},c:{t:"جبران برنامه‌های قبل",e:"🔁",c:"var(--warn)"},a:{t:"جلوتر از برنامه",e:"⏩",c:"var(--ok)"},b:{t:"مازاد نقاط ضعف",e:"🎯",c:"var(--s5)"}};
-function withLog(p){
+function withLog(p,at){
   if(!p||!p.minutes)return p;
-  var M=model(),td=ymd(todayD()),cur=(S.log&&S.log[td])||{},add={},any=false;
+  var M=model(),tdy=ymd(todayD()),td=at?ymd(new Date(at)):tdy,tdN=parseD(td),cur=(S.log&&S.log[td])||{},add={},any=false;
   Object.keys(p.minutes).forEach(function(i){var row=p.minutes[i]||{};Object.keys(row).forEach(function(k){
     var old=+((S.minutes[i]||{})[k])||0,nv=+row[k]||0,delta=nv-old;if(!delta)return;
-    var d=M.days[+i],cat=+k===BK?"b":!d?"n":d.diff<0?"c":d.diff>0?"a":"n",key=i+"_"+k+"_"+cat;
+    var d=M.days[+i],df=!d?0:(td===tdy?d.diff:dayDiff(tdN,d.date)),cat=+k===BK?"b":!d?"n":df<0?"c":df>0?"a":"n",key=i+"_"+k+"_"+cat;
     var base=add[key]!=null?add[key]:(+cur[key]||0);add[key]=Math.max(0,base+delta);any=true})});
   if(!any)return p;var q=Object.assign({},p),lg={};lg[td]=add;q.log=lg;return q;
 }
@@ -1693,7 +1737,7 @@ function timerRepHTML(M){
   if(isT&&run>0)h+='<div class="alert" style="margin-top:10px"><span>⏳</span><span>یک جلسه‌ی '+esc(SKA[S.timer.skill].name)+" در حال اجراست ("+fa(run)+" دقیقه تا الان)؛ وقتی تمام شود یا متوقفش کنی، این‌جا اضافه می‌شود.</span></div>";
   var mn=(S.man||{})[sel];if(mn&&mn.c)h+='<div class="small" style="margin-top:10px;padding:8px 10px;border:1px dashed var(--line);border-radius:10px">✍️ ثبت دستی این روز: '+(mn.p?"+"+fa(mn.p)+" دقیقه":"")+(mn.n?" −"+fa(mn.n)+" دقیقه":"")+" ("+fa(mn.c)+" تغییر). این‌ها در ساعت مطالعه‌ی تایمر حساب نمی‌شوند.</div>";
   h+="</div>";
-  if(A.n){h+='<div class="small" style="margin:12px 0 6px;font-weight:700">🧾 جلسه‌های '+(isT?"امروز":"این روز")+'</div><div class="card" style="padding:6px 12px">'+A.L.map(function(x,j){var d=x.tg>=0?M.days[x.tg]:null;return'<div class="hl" style="grid-template-columns:auto 1fr auto;align-items:center"><span style="font-weight:800">'+fa(j+1)+'</span><span><bdi dir="ltr" style="font-weight:700">'+clk(x.s)+"–"+clk(x.e)+'</bdi> · <bdi>'+SKA[x.k].e+" "+esc(SKA[x.k].name)+'</bdi>'+(d?' <bdi class="small">('+esc(shortL(d.n))+")</bdi>":"")+'</span><span>'+fa(x.m)+"′ "+(x.f?"🍅":"⏹️")+"</span></div>"}).join("")+"</div>"}
+  if(A.n){h+='<div class="small" style="margin:12px 0 6px;font-weight:700">🧾 جلسه‌های '+(isT?"امروز":"این روز")+'</div><div class="card" style="padding:6px 12px">'+A.L.map(function(x,j){var d=x.tg>=0?M.days[x.tg]:null;return'<div class="hl" style="grid-template-columns:auto 1fr auto;align-items:center"><span style="font-weight:800">'+fa(j+1)+'</span><span><bdi dir="ltr" style="font-weight:700">'+clk(x.s)+"–"+clk(x.e)+'</bdi> · <bdi>'+SKA[x.k].e+" "+esc(SKA[x.k].name)+'</bdi>'+(d?' <bdi class="small">('+esc(shortL(d.n))+")</bdi>":"")+'</span><span>'+fa(x.m)+"′ "+(x.f?"🍅":"⏹️")+(x.src?" 🕒":"")+"</span></div>"}).join("")+"</div>"}
   else h+='<div class="empty" style="margin-top:8px">'+(isT?"امروز هنوز تایمری کامل یا متوقف نشده. هر پومودوروی کامل یا هر جلسه‌ای که با «توقف» ببندی، با ساعت شروع و پایانش این‌جا ثبت می‌شود.":"در این روز با تایمر جلسه‌ای ثبت نشده.")+"</div>";
   /* last 7 calendar days */
   var w7=[],tot=0,act=0,best=0,bestD=null;for(var o=6;o>=0;o--){var dt=addDays(todayD(),-o),k=ymd(dt),a=tAgg(k);w7.push({d:dt,m:a.m,n:a.n});tot+=a.m;if(a.m>0)act++;if(a.m>best){best=a.m;bestD=dt}}
@@ -2031,7 +2075,7 @@ var baseTitle=document.title;
 function tick(){
   var t=S.timer;if(!t||t.phase==="ready"){if(document.title!==baseTitle)document.title=baseTitle;return}
   var dur=t.dur||pset("pomo",25)*60,left=dur-(Date.now()-t.start)/1000;
-  if(left>0){var sk0=t.start+"|"+t.phase;if(endKey!==sk0){endKey=sk0;clearTimeout(endT);endT=setTimeout(tick,left*1000+80)}}if(left<=0){if(t.dev&&t.dev!==DEVID&&-left<120)return;if(t.phase==="break")breakDone();else pomoDone();return}
+  if(left>0){var sk0=t.start+"|"+t.phase;if(endKey!==sk0){endKey=sk0;clearTimeout(endT);endT=setTimeout(tick,left*1000+80)}}if(left<=0){var late=-left;if(t.dev&&t.dev!==DEVID&&late<LATE_OTHER)return;if((!t.dev||t.dev===DEVID)&&late<LATE_OTHER){if(t.phase==="break")breakDone();else pomoDone("")}else if(SYNCED)settle(t,late);return}
   document.title=(t.phase==="break"?"☕ ":"🍅 ")+mmss(left)+" · Deutsch B2";
   var c=document.getElementById("clock");if(c)c.textContent=mmss(left);
   var pb=document.getElementById("pbar");if(pb)pb.style.width=(100*(1-left/dur)).toFixed(2)+"%";
@@ -2112,6 +2156,9 @@ document.addEventListener("click",function(ev){
   if(a==="mockadd"){var mk={d:ymd(todayD()),lvl:document.getElementById("mk-lvl").value},any=false;MOCKM.forEach(function(m){var v=document.getElementById("mk-"+m[0]).value;if(v!==""){mk[m[0]]=Math.max(0,Math.min(100,Math.round(+v)));any=true}});if(!any){toast("حداقل نمره‌ی یک بخش را وارد کن.");return}patch({mocks:(S.mocks||[]).concat([mk])});celebrate("نتیجه‌ی Modelltest ثبت شد",false);return}
   if(a==="mockdel"){var arr=(S.mocks||[]).slice();arr.splice(+t.dataset.x,1);patch({mocks:arr});return}
   if(a==="timerday"){if(isFocus()){toast("یک پومودورو در حال اجراست.");return}ui.tgt=t.dataset.i;ui.skill=+t.dataset.k;closeModal();ui.tab="today";ui.enter=true;startTimer();window.scrollTo(0,0);toast("⏱️ "+SKA[ui.skill].e+" "+SKA[ui.skill].name+" · "+tgtLabel(+t.dataset.i));return}
+  if(a==="stl-ok"){var sm=document.getElementById("stl-m");staleSettle(sm?+sm.value:0);return}
+  if(a==="stl-no"){staleSettle(0);return}
+  if(a==="undoauto"){undoAuto();return}
   if(a==="pskip"){var tt=S.timer;if(tt){pomoLock=tt.start;patch({timer:{skill:tt.skill,phase:"ready",n:tt.n||0,tgt:tt.tgt,dev:DEVID}})}return}
   if(a==="timerk"){if(isFocus()){toast("یک پومودورو در حال اجراست.");return}ui.skill=+t.dataset.k;startTimer();toast("⏱️ تایمر "+SKA[ui.skill].e+" "+SKA[ui.skill].name+" شروع شد");return}
   if(a==="srcards"){ui.tab="coach";CO.mode="cards";FC.deck="sr";fcBuild();ui.enter=true;render();window.scrollTo(0,0);return}
