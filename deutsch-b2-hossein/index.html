@@ -6,6 +6,10 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#F6F9FC">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
 <title>Deutsch B2 · حسین</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -884,7 +888,7 @@ function tgtOptions(M){var o=[["today","📌 امروز · "+fullLabel(M.days[to
   o.push(["auto","⚡ خودکار: اول قدیمی‌ترین کار مانده"]);return o}
 function dayNeed(tg,k){var M=model();if(typeof tg!=="number")return skillNeed(k);var d=M.days[tg];return d?Math.max(0,d.P[k]-d.got[k]):0}
 function startTimer(){if(staleT()){toast("اول تکلیف پومودوروی نیمه‌تمامِ بالای صفحه را مشخص کن.");return}notifAuto();var k=ui.skill,M=model(),tg=resolveTgt(ui.tgt==null&&S.timer&&S.timer.phase==="ready"&&S.timer.tgt!=null?String(S.timer.tgt):ui.tgt,M),pm=pset("pomo",25),need=dayNeed(tg,k),dur=need>0?Math.min(pm,need):pm,n=S.timer&&S.timer.n||0;
-  patch({timer:{skill:k,phase:"focus",start:Date.now(),dur:dur*60,n:n,tgt:tg,dev:DEVID}});unlockAudio()}
+  patch({timer:{skill:k,phase:"focus",start:Date.now(),dur:dur*60,n:n,tgt:tg,dev:DEVID}});unlockAudio();wakeOn()}
 var actx=null;function unlockAudio(){try{actx=actx||new(window.AudioContext||window.webkitAudioContext)();if(actx.state==="suspended")actx.resume()}catch(e){}}
 function chime(up){try{unlockAudio();if(!actx)return;var t0=actx.currentTime;(up?[660,880,1100]:[880,660]).forEach(function(f,i){var o=actx.createOscillator(),g=actx.createGain();o.frequency.value=f;o.type="sine";g.gain.setValueAtTime(0,t0+i*.22);g.gain.linearRampToValueAtTime(.25,t0+i*.22+.02);g.gain.exponentialRampToValueAtTime(.001,t0+i*.22+.5);o.connect(g);g.connect(actx.destination);o.start(t0+i*.22);o.stop(t0+i*.22+.55)})}catch(e){}try{navigator.vibrate&&navigator.vibrate(up?[200,100,200,100,300]:[300,150,300])}catch(e){}}
 /* ---- timer safety: wait for sync, compare with the server copy, one credit per pomodoro, real end time, stale-timer card ---- */
@@ -943,21 +947,61 @@ function pomoDone(lateS){var t=S.timer;if(!t||pomoLock===t.start)return;pomoLock
   if(lateS&&typeof t.tgt==="number")pp.undo=undoRec(t,sr,mins,at0);
   patch(pp,Math.min(at0,Date.now()));var a=model();
   var full=false;for(var i=0;i<NDAYS;i++)if(b.days[i].rem>0&&a.days[i].rem===0&&a.days[i].diff===0)full=true;
-  ui.lastLog=SKA[t.skill].e+" "+SKA[t.skill].name+" "+fa(mins)+"′ ← "+tgtLabel(t.tgt);if(!lateS)chime(true);if(!lateS)notify(full?"🎉 مأموریت امروز کامل شد":"🍅 پومودورو "+fa(n)+" کامل شد",mh(mins)+" ثبت شد · "+(lb?"استراحت بلند ":"استراحت ")+fa(br)+" دقیقه","pomo-end");celebrate(full?"مأموریت امروز کامل شد":"🍅 پومودورو "+fa(n)+" کامل شد · "+mh(mins)+" ثبت شد",full);
+  ui.lastLog=SKA[t.skill].e+" "+SKA[t.skill].name+" "+fa(mins)+"′ ← "+tgtLabel(t.tgt);if(!lateS){chime(true);alarmStart(full?"🎉 مأموریت امروز کامل شد":"🍅 پومودورو "+fa(n)+" کامل شد","وقت استراحت است · "+(lb?"استراحت بلند ":"استراحت ")+fa(br)+" دقیقه",8)}if(!lateS)notify(full?"🎉 مأموریت امروز کامل شد":"🍅 پومودورو "+fa(n)+" کامل شد",mh(mins)+" ثبت شد · "+(lb?"استراحت بلند ":"استراحت ")+fa(br)+" دقیقه","pomo-end");celebrate(full?"مأموریت امروز کامل شد":"🍅 پومودورو "+fa(n)+" کامل شد · "+mh(mins)+" ثبت شد",full);
   toast((lateS?"🕒 پومودوروی ساعت "+clk(t.start)+" دیرهنگام ثبت شد · ":"")+(lb?"☕ استراحت بلند ":"☕ استراحت ")+fa(br)+" دقیقه")}
 /* ---- device notification when a pomodoro / break ends ---- */
 var endKey="",endT=0;
 function notifSup(){return typeof Notification!=="undefined"}
 function notifState(){return notifSup()?Notification.permission:"na"}
-function notify(title,body,tag){try{if(notifState()!=="granted"||S.settings.notify===false)return;if(!document.hidden&&document.hasFocus())return;var n=new Notification(title,{body:body,tag:tag||"pomo",renotify:true,dir:"rtl",lang:"fa"});n.onclick=function(){try{window.focus();n.close()}catch(e){}}}catch(e){}}
+var swReg=null,alarmT=0,alarmN=0,alarmOn=false,titleT=0,wl=null,wlAt=0;
+function swInit(){try{if(!("serviceWorker" in navigator)||!window.isSecureContext||!document.querySelector('link[rel="manifest"]'))return;navigator.serviceWorker.register("sw.js",{scope:"./"}).then(function(){return navigator.serviceWorker.ready}).then(function(r){swReg=r}).catch(function(){})}catch(e){}}
+function showNote(title,body,tag){var o={body:body,tag:tag||"pomo",renotify:true,dir:"rtl",lang:"fa",vibrate:[200,100,200]};
+  if(swReg){o.icon="icon-192.png";o.badge="icon-192.png";try{swReg.showNotification(title,o);return true}catch(e){}}
+  try{var n=new Notification(title,o);n.onclick=function(){try{window.focus();n.close()}catch(e){}};return true}catch(e){}
+  return false}
+function notify(title,body,tag){try{if(notifState()!=="granted"||S.settings.notify===false)return false;if(!document.hidden&&document.hasFocus())return false;return showNote(title,body,tag)}catch(e){return false}}
+/* loud in-page alarm: works in every environment (even when system notifications are blocked) */
+function alarmStop(){alarmOn=false;clearInterval(alarmT);clearInterval(titleT);var e=document.getElementById("alarm");if(e)e.remove();try{if(document.title.indexOf("⏰")===0)document.title=baseTitle}catch(x){}try{navigator.vibrate&&navigator.vibrate(0)}catch(x){}}
+function alarmStart(title,sub,reps){if(S.settings.alarm===false)return;alarmStop();alarmOn=true;alarmN=0;
+  var el=document.createElement("div");el.id="alarm";el.setAttribute("role","alertdialog");el.setAttribute("aria-live","assertive");
+  el.style.cssText="position:fixed;left:0;right:0;top:0;bottom:0;z-index:120;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.72);padding:24px";
+  el.innerHTML='<div class="sheet" style="max-width:380px;width:100%;text-align:center;border-radius:24px;padding:28px 20px"><div style="font-size:54px" aria-hidden="true">⏰</div><div style="font-weight:800;font-size:22px;margin:8px 0">'+esc(title)+'</div><p class="small" style="margin:0 0 18px;line-height:1.9">'+esc(sub)+'</p><button class="go" data-a="alarmoff" style="width:100%">باشه</button></div>';
+  document.body.appendChild(el);
+  alarmT=setInterval(function(){if(!alarmOn)return;if(++alarmN>=(reps||6)){alarmStop();return}chime(true)},4000);
+  titleT=setInterval(function(){document.title=document.title.indexOf("⏰")===0?baseTitle:"⏰ "+title},900)}
+/* keep the screen on while a timer runs, so the page is not suspended and the alarm can sound */
+function wakeOn(){try{if(S.settings.wake===false||wl||!navigator.wakeLock||Date.now()-wlAt<30000)return;wlAt=Date.now();navigator.wakeLock.request("screen").then(function(l){wl=l;l.addEventListener("release",function(){wl=null})}).catch(function(){})}catch(e){}}
+function wakeOff(){try{if(wl){var l=wl;wl=null;l.release()}}catch(e){}}
+function envInfo(){var emb=false,sa=false;try{emb=window.top!==window}catch(e){emb=true}try{sa=(window.matchMedia&&matchMedia("(display-mode: standalone)").matches)||navigator.standalone===true}catch(e){}return{emb:emb,sa:sa,sup:notifSup(),perm:notifState(),sw:!!swReg,wk:!!navigator.wakeLock}}
+var GHURL="https://noorbakhshsara3-ui.github.io/german-study-pages/deutsch-b2-hossein/";
+function notifPanel(){var v=envInfo(),st,tip="";
+  if(!v.sup){st="🚫 این محیط اعلان سیستمی ندارد (مثلاً اپ موبایل)";tip="در این محیط فقط هشدار داخل صفحه کار می‌کند."}
+  else if(v.perm==="denied"){st="🔕 مسدود است";tip="از تنظیمات مرورگر برای این سایت اجازه بده."}
+  else if(v.perm==="granted"){st="✅ مجوز داده شده"}
+  else{st="⚠️ هنوز اجازه نداده‌ای"}
+  if(v.emb&&v.sup&&v.perm!=="granted")tip="این اپ داخل صفحه‌ی claude.ai باز شده و مرورگرها به برنامه‌های داخل آن اجازه‌ی اعلان سیستمی نمی‌دهند. هشدار داخل صفحه همیشه کار می‌کند. برای اعلان سیستمی، نسخه‌ی مستقل را در یک زبانه‌ی جدا باز کن (داده‌هایش جداست).";
+  var al=S.settings.alarm!==false,wk=S.settings.wake!==false;
+  var h='<div class="scrim" data-a="close"><div class="sheet" role="dialog" aria-modal="true" data-stop="1"><h3>🔔 اعلان و هشدار پایان پومودورو</h3>';
+  h+='<div class="hl"><span>اعلان سیستمی</span><b>'+st+'</b></div>';
+  h+='<div class="hl"><span>هشدار داخل صفحه (صدا، لرزش، پنجره‌ی بزرگ)</span><b>'+(al?"✅ روشن":"⏸ خاموش")+'</b></div>';
+  h+='<div class="hl"><span>روشن ماندن صفحه هنگام تایمر</span><b>'+(v.wk?(wk?"✅ روشن":"⏸ خاموش"):"🚫 پشتیبانی نمی‌شود")+'</b></div>';
+  if(tip)h+='<p class="small" style="line-height:1.9;margin:10px 0 0">'+esc(tip)+(v.emb&&v.sup&&v.perm!=="granted"?' <a href="'+GHURL+'" target="_blank" rel="noopener">باز کردن نسخه‌ی مستقل</a>':"")+"</p>";
+  h+='<p class="small muted" style="line-height:1.9;margin:10px 0 0">اگر صفحه قفل شود یا برنامه به پس‌زمینه برود، مرورگر تایمر را متوقف می‌کند و هشدار با تأخیر می‌رسد؛ برای اطمینان، صفحه را باز و صفحه‌ی گوشی را روشن نگه دار. در آیفون، اعلان فقط بعد از «Add to Home Screen» (iOS 16.4 به بعد) کار می‌کند.</p>';
+  h+='<div class="row" style="gap:8px;flex-wrap:wrap;margin-top:12px">';
+  if(v.sup&&v.perm==="default")h+='<button class="btn primary sm" data-a="notifreq">🔔 درخواست اجازه</button>';
+  if(v.sup&&v.perm==="granted")h+='<button class="btn ghost sm" data-a="notiftest">🧪 آزمایش اعلان</button>';
+  h+='<button class="btn ghost sm" data-a="alarmtest">🔊 آزمایش هشدار</button><button class="btn ghost sm" data-a="alarmset">'+(al?"خاموش کردن هشدار":"روشن کردن هشدار")+'</button>';
+  if(v.wk)h+='<button class="btn ghost sm" data-a="wakeset">'+(wk?"خاموش کردن روشن‌ماندن صفحه":"روشن کردن روشن‌ماندن صفحه")+'</button>';
+  h+='</div><div class="row" style="justify-content:flex-end;margin-top:12px"><button class="btn primary" data-a="close">بستن</button></div></div></div>';
+  document.getElementById("modal").innerHTML=h}
 function notifAsk(){if(!notifSup()){toast("این مرورگر یا محیط اعلان را پشتیبانی نمی‌کند.");return}
   var st=Notification.permission;
-  if(st==="granted"){try{new Notification("🔔 اعلان فعال است",{body:"وقتی پومودورو یا استراحت تمام شود، اینجا خبر می‌دهم.",dir:"rtl",lang:"fa",tag:"pomo-test"})}catch(e){toast("ارسال اعلان ممکن نشد")}return}
+  if(st==="granted"){if(!showNote("🔔 اعلان فعال است","وقتی پومودورو یا استراحت تمام شود، اینجا خبر می‌دهم.","pomo-test"))toast("ارسال اعلان ممکن نشد");return}
   if(st==="denied"){toast("اعلان در تنظیمات مرورگر مسدود است؛ از تنظیمات سایت اجازه بده.");return}
   try{var p=Notification.requestPermission();if(p&&p.then)p.then(function(r){toast(r==="granted"?"🔔 اعلان فعال شد":"اعلان فعال نشد");render()},function(){toast("این محیط اجازهٔ اعلان نمی‌دهد")})}catch(e){toast("این محیط اجازهٔ اعلان نمی‌دهد")}}
 function notifAuto(){try{if(notifSup()&&Notification.permission==="default"&&!S.settings.notifAsked){patch({settings:{notifAsked:1}});var p=Notification.requestPermission();if(p&&p.then)p.then(function(){render()},function(){})}}catch(e){}}
-function notifBtn(){var s=notifState(),l=s==="granted"?"🔔 اعلان پایان پومودورو فعال ✓ (آزمایش)":s==="denied"?"🔕 اعلان مسدود است":s==="na"?"🔕 اعلان در این محیط نیست":"🔔 فعال‌سازی اعلان پایان پومودورو";return'<div class="row" style="justify-content:flex-end;margin-top:8px"><button class="btn ghost sm" data-a="notifask">'+l+"</button></div>"}
-function breakDone(){var t=S.timer;if(!t||pomoLock===t.start)return;pomoLock=t.start;patch({timer:{skill:t.skill,phase:"ready",n:t.n||0,tgt:t.tgt,dev:DEVID}});if(Date.now()-tEnd(t)>60000)return;chime(false);notify("☕ استراحت تمام شد","وقت پومودوروی بعدی است · "+SKA[t.skill].name,"pomo-end");toast("⏰ استراحت تمام شد؛ پومودوروی بعدی آماده است")}
+function notifBtn(){var s=notifState(),l=s==="granted"?"🔔 اعلان و هشدار پایان پومودورو ✓":"🔔 اعلان و هشدار پایان پومودورو · تنظیم";return'<div class="row" style="justify-content:flex-end;margin-top:8px"><button class="btn ghost sm" data-a="notifask">'+l+"</button></div>"}
+function breakDone(){var t=S.timer;if(!t||pomoLock===t.start)return;pomoLock=t.start;patch({timer:{skill:t.skill,phase:"ready",n:t.n||0,tgt:t.tgt,dev:DEVID}});if(Date.now()-tEnd(t)>60000)return;chime(false);alarmStart("☕ استراحت تمام شد","وقت پومودوروی بعدی است · "+SKA[t.skill].name,3);notify("☕ استراحت تمام شد","وقت پومودوروی بعدی است · "+SKA[t.skill].name,"pomo-end");toast("⏰ استراحت تمام شد؛ پومودوروی بعدی آماده است")}
 function stopTimer(){
   var t=S.timer; if(!t)return;if(staleT()){toast("اول تکلیف پومودوروی نیمه‌تمامِ بالای صفحه را مشخص کن.");return}
   if(!isFocus()){patch({timer:null});toast("جلسه‌ی پومودورو تمام شد · "+fa(t.n||0)+" 🍅");return}
@@ -2073,14 +2117,15 @@ function render(){
 function mmss(sec){sec=Math.max(0,Math.ceil(sec));var m=Math.floor(sec/60),ss=sec%60;return(m>=60?Math.floor(m/60)+":"+String(m%60).padStart(2,"0"):String(m).padStart(2,"0"))+":"+String(ss).padStart(2,"0")}
 var baseTitle=document.title;
 function tick(){
-  var t=S.timer;if(!t||t.phase==="ready"){if(document.title!==baseTitle)document.title=baseTitle;return}
+  var t=S.timer;if(!t||t.phase==="ready"){wakeOff();if(!alarmOn&&document.title!==baseTitle)document.title=baseTitle;return}
   var dur=t.dur||pset("pomo",25)*60,left=dur-(Date.now()-t.start)/1000;
+  if(left>0)wakeOn();
   if(left>0){var sk0=t.start+"|"+t.phase;if(endKey!==sk0){endKey=sk0;clearTimeout(endT);endT=setTimeout(tick,left*1000+80)}}if(left<=0){var late=-left;if(t.dev&&t.dev!==DEVID&&late<LATE_OTHER)return;if((!t.dev||t.dev===DEVID)&&late<LATE_OTHER){if(t.phase==="break")breakDone();else pomoDone("")}else if(SYNCED)settle(t,late);return}
-  document.title=(t.phase==="break"?"☕ ":"🍅 ")+mmss(left)+" · Deutsch B2";
+  if(!alarmOn)document.title=(t.phase==="break"?"☕ ":"🍅 ")+mmss(left)+" · Deutsch B2";
   var c=document.getElementById("clock");if(c)c.textContent=mmss(left);
   var pb=document.getElementById("pbar");if(pb)pb.style.width=(100*(1-left/dur)).toFixed(2)+"%";
 }
-setInterval(tick,1000);document.addEventListener("visibilitychange",function(){if(!document.hidden)tick()});
+setInterval(tick,1000);document.addEventListener("visibilitychange",function(){if(!document.hidden){wlAt=0;tick()}});
 setInterval(function(){var ae=document.activeElement;if(document.hidden||document.querySelector("#modal .sheet")||(ae&&/INPUT|TEXTAREA|SELECT/.test(ae.tagName)))return;if(ui.tab==="today"||ui.tab==="plan")render()},60000);
 
 /* ---------- events ---------- */
@@ -2099,7 +2144,13 @@ document.addEventListener("click",function(ev){
   if(a==="rebase"||a==="rebase-today"){var dt=a==="rebase"?(ui.rp||ymd(todayD())):ymd(todayD());var Mx=model(),D=parseD(dt),nb=(S.settings.breaks||[]).filter(function(b){return b.i<Mx.pos}).concat([{i:Mx.pos,d:ymd(D)}]),nl=layout(S.settings.start,nb),end=nl[nl.length-1].date;
     if(!ask("ادامه‌ی برنامه از "+WD[D.getDay()]+" "+dm(D)+" دوباره چیده شود؟\nکارهای انجام‌شده سر جایشان می‌مانند. پایان جدید: "+dm(end)+" "+end.getFullYear(),function(){t.click()}))return;
     patch({settings:Mx.pos===0?{start:ymd(D),breaks:[]}:{breaks:nb}});ui.rp=null;celebrate("برنامه دوباره چیده شد",false);toast("ادامه از "+dm(D)+" · پایان جدید: "+dm(end));return}
-  if(a==="notifask"){notifAsk();return}
+  if(a==="notifask"){notifPanel();return}
+  if(a==="notifreq"){notifAsk();setTimeout(notifPanel,700);return}
+  if(a==="notiftest"){toast(showNote("🔔 آزمایش اعلان","اگر این را می‌بینی، اعلان کار می‌کند.","pomo-test")?"اعلان آزمایشی فرستاده شد":"ارسال اعلان ممکن نشد");return}
+  if(a==="alarmtest"){unlockAudio();alarmStart("🔊 آزمایش هشدار","اینطوری هنگام پایان پومودورو صدا می‌دهد.",2);return}
+  if(a==="alarmoff"){alarmStop();return}
+  if(a==="alarmset"){patch({settings:{alarm:S.settings.alarm===false}});notifPanel();return}
+  if(a==="wakeset"){var wo=S.settings.wake!==false;patch({settings:{wake:!wo}});if(wo)wakeOff();else wakeOn();notifPanel();return}
   if(a==="goal-clear"){patch({settings:{goal:""}});return}
   if(a==="hereopen"){hereModal();return}
   if(a==="hereok"){var hn=+(document.getElementById("here-n")||{}).value,hd=+(document.getElementById("here-d")||{}).value||1,hdt=(document.getElementById("here-dt")||{}).value,R=hereApply(hn,hd,hdt);if(!R){toast("این روز در برنامه پیدا نشد.");return}
@@ -2263,7 +2314,7 @@ document.addEventListener("visibilitychange",function(){if(!document.hidden)rend
 try{if(!S.settings.mig2&&!window.claude){var RL=hereApply(4,2,"2026-11-21");
   if(RL){var cl3={},oc=S.settings.closed||{};Object.keys(oc).forEach(function(k){if(+k<RL.fi&&oc[k])cl3[k]=1});Object.keys(RL.cl).forEach(function(k){if(RL.cl[k])cl3[k]=1});
     S.settings=Object.assign({},S.settings,{closed:cl3,breaks:RL.nb,heavy:RL.hv,mig2:"gh-replan-2026-11-20"});S.timer=null;LAYC={k:null,v:null};layout();cache()}}}catch(eRL){}
-render();
+swInit();render();
 connect();
 })();
 </script>
